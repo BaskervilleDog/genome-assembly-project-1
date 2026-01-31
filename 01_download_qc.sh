@@ -20,7 +20,7 @@ set -euo pipefail
 # CONFIGURATION
 #==============================================================================
 
-THREADS=10
+THREADS=12
 
 ACCESSIONS=(
   SRR10848482

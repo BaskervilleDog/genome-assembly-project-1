@@ -31,7 +31,7 @@ KMER_SIZE=15
 WINDOW_SIZE=5
 
 PILON_ROUNDS=2
-PILON_MEMORY="32G"
+PILON_MEMORY="48G"
 
 SPECIES="Trichoderma_harzianum"
 
@@ -139,51 +139,65 @@ if [[ "${RUN_PILON}" == true ]]; then
     mkdir -p "${PILON_DIR}"
 
     for ROUND in $(seq 1 "${PILON_ROUNDS}"); do
-        ROUND_DIR="${PILON_DIR}/round_${ROUND}"
-        mkdir -p "${ROUND_DIR}"
+    ROUND_DIR="${PILON_DIR}/round_${ROUND}"
+    mkdir -p "${ROUND_DIR}"
 
-        OUT_FASTA="${ROUND_DIR}/pilon_round${ROUND}.fasta"
+    OUT_FASTA="${ROUND_DIR}/pilon_round${ROUND}.fasta"
 
-        if [[ -f "${OUT_FASTA}" ]]; then
-            log_info "Pilon round ${ROUND} already complete"
-            CURRENT_ASSEMBLY="${OUT_FASTA}"
-            continue
-        fi
-
-        log_info "Starting Pilon round ${ROUND}"
-
-        [[ -f "${CURRENT_ASSEMBLY}.bwt" ]] || \
-            mamba run -n bwa bwa index "${CURRENT_ASSEMBLY}"
-
-        # Map Illumina libraries
-        mamba run -n bwa bwa mem -t "${THREADS}" "${CURRENT_ASSEMBLY}" \
-            "${ILLUMINA_R1}" "${ILLUMINA_R2}" | \
-            mamba run -n samtools samtools sort -@ "${THREADS}" \
-            -o "${ROUND_DIR}/lib1.bam"
-
-        mamba run -n bwa bwa mem -t "${THREADS}" "${CURRENT_ASSEMBLY}" \
-            "${ILLUMINA2_R1}" "${ILLUMINA2_R2}" | \
-            mamba run -n samtools samtools sort -@ "${THREADS}" \
-            -o "${ROUND_DIR}/lib2.bam"
-
-        mamba run -n samtools samtools merge -@ "${THREADS}" \
-            "${ROUND_DIR}/merged.bam" \
-            "${ROUND_DIR}/lib1.bam" "${ROUND_DIR}/lib2.bam"
-
-        mamba run -n samtools samtools index "${ROUND_DIR}/merged.bam"
-
-        JAVA_TOOL_OPTIONS="-Xmx${PILON_MEMORY}" \
-        mamba run -n pilon pilon \
-            --genome "${CURRENT_ASSEMBLY}" \
-            --frags "${ROUND_DIR}/merged.bam" \
-            --output "pilon_round${ROUND}" \
-            --outdir "${ROUND_DIR}" \
-            --threads "${THREADS}" \
-            --changes \
-            2>&1 | tee "${LOG_DIR}/pilon_round${ROUND}.log"
-
+    if [[ -f "${OUT_FASTA}" ]]; then
+        log_info "Pilon round ${ROUND} already complete"
         CURRENT_ASSEMBLY="${OUT_FASTA}"
-    done
+        continue
+    fi
+
+    log_info "Starting Pilon round ${ROUND}"
+
+    [[ -f "${CURRENT_ASSEMBLY}.bwt" ]] || \
+        mamba run -n bwa bwa index "${CURRENT_ASSEMBLY}"
+
+    # Map Illumina libraries
+    mamba run -n bwa bwa mem -t "${THREADS}" "${CURRENT_ASSEMBLY}" \
+        "${ILLUMINA_R1}" "${ILLUMINA_R2}" | \
+        mamba run -n samtools samtools sort -@ "${THREADS}" \
+        -o "${ROUND_DIR}/lib1.bam"
+
+    mamba run -n bwa bwa mem -t "${THREADS}" "${CURRENT_ASSEMBLY}" \
+        "${ILLUMINA2_R1}" "${ILLUMINA2_R2}" | \
+        mamba run -n samtools samtools sort -@ "${THREADS}" \
+        -o "${ROUND_DIR}/lib2.bam"
+
+    mamba run -n samtools samtools merge -f -@ "${THREADS}" \
+        "${ROUND_DIR}/merged.bam" \
+        "${ROUND_DIR}/lib1.bam" "${ROUND_DIR}/lib2.bam"
+
+    mamba run -n samtools samtools index "${ROUND_DIR}/merged.bam"
+
+    # Run Pilon
+    JAVA_TOOL_OPTIONS="-Xmx${PILON_MEMORY}" \
+        mamba run -n pilon pilon \
+        --genome "${CURRENT_ASSEMBLY}" \
+        --frags "${ROUND_DIR}/merged.bam" \
+        --output "pilon_round${ROUND}" \
+        --outdir "${ROUND_DIR}" \
+        --changes \
+        --chunksize 10000000 \
+        2>&1 | tee "${LOG_DIR}/pilon_round${ROUND}.log"
+
+    CURRENT_ASSEMBLY="${OUT_FASTA}"
+    
+    # CLEANUP: Remove intermediate files and force garbage collection
+    log_info "Cleaning up intermediate files from round ${ROUND}"
+    rm -f "${ROUND_DIR}/lib1.bam" "${ROUND_DIR}/lib2.bam"
+    rm -f "${ROUND_DIR}/merged.bam" "${ROUND_DIR}/merged.bam.bai"
+    
+    # Small delay to allow system cleanup
+    sleep 5
+    
+    # Clear system caches (if you have sudo access)
+    # sync && echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
+    
+    log_info "Round ${ROUND} complete, memory released"
+done
 fi
 
 FINAL_ASSEMBLY="${CURRENT_ASSEMBLY}"
