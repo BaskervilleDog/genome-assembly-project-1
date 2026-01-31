@@ -48,22 +48,32 @@ run_jellyfish() {
   local sample=$1
   local r1=$2
   local r2=$3
-
+  
   log "Running Jellyfish for ${sample}"
-
+  
+  # Decompress to temporary directory
+  local tmp_dir="${OUT_DIR}/tmp_${sample}"
+  mkdir -p "${tmp_dir}"
+  
+  gunzip -c "${DATA_DIR}/${r1}" > "${tmp_dir}/R1.fastq"
+  gunzip -c "${DATA_DIR}/${r2}" > "${tmp_dir}/R2.fastq"
+  
   mamba run -n jellyfish jellyfish count \
     -C \
     -m "${KMER}" \
     -s "${HASH_SIZE}" \
     -t "${THREADS}" \
     -o "${OUT_DIR}/${sample}.jf" \
-    <(gunzip -c "${DATA_DIR}/${r1}") \
-    <(gunzip -c "${DATA_DIR}/${r2}")
-
+    "${tmp_dir}/R1.fastq" \
+    "${tmp_dir}/R2.fastq"
+  
   mamba run -n jellyfish jellyfish histo \
     -t "${THREADS}" \
     "${OUT_DIR}/${sample}.jf" \
     > "${OUT_DIR}/${sample}.histo"
+  
+  # Clean up
+  rm -rf "${tmp_dir}"
 }
 
 estimate_genome_size() {
