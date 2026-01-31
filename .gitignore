@@ -1,3 +1,12 @@
 *.pyc
 *.pyo
 __pycache__/
+busco_downloads/
+downloads/
+filtered_data/
+flye_assembly/
+genome_size_estimation/
+qc_report/
+raven_assembly/
+seqfetcher/
+wtdbg2/
