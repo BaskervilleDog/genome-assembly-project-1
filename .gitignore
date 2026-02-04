@@ -12,3 +12,9 @@ seqfetcher/
 wtdbg2_assembly/
 multiqc_data/
 multiqc_data_1/
+assembly_comparison/
+seqfetcher/
+Augustus/
+braker_annotation/
+comparative_genomics/
+agat_log_braker/

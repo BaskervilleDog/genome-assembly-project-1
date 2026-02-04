@@ -14,22 +14,27 @@ set -Eeuo pipefail
 # CONFIGURATION
 #==============================================================================
 
-# Input assemblies
-INPUT_ASSEMBLY="./flye_assembly/pilon_round2/pilon_round2.fasta"
+# REQUIRED: assembler directory (flye_assembly, wtdbg2_assembly, raven_assembly)
+ASSEMBLY_DIR="${1:?Usage: $0 <assembly_dir>}"
+
+# REQUIRED: input assembly fasta (relative to ASSEMBLY_DIR)
+ASSEMBLY_FASTA="${2:?Usage: $0 <assembly_dir> <assembly_fasta>}"
+
 REFERENCE_GENOME="./downloads/GCF_003025095.1/ncbi_dataset/data/GCF_003025095.1/GCF_003025095.1_Triha_v1.0_genomic.fna"
 
-# Parameters
 THREADS=12
 SPECIES="Trichoderma_harzianum"
 
-# Output layout
-OUTPUT_DIR="./scaffolded_assembly"
+# Output inside assembler folder
+OUTPUT_DIR="${ASSEMBLY_DIR}/ragtag"
 LOG_DIR="${OUTPUT_DIR}/logs"
 SCAFFOLD_DIR="${OUTPUT_DIR}/scaffold"
 PATCH_DIR="${OUTPUT_DIR}/patched"
 QC_DIR="${OUTPUT_DIR}/quality_assessment"
 
+INPUT_ASSEMBLY="${ASSEMBLY_DIR}/${ASSEMBLY_FASTA}"
 FINAL_ASSEMBLY="${SCAFFOLD_DIR}/ragtag.scaffold.fasta"
+PATCHED_ASSEMBLY="${PATCH_DIR}/ragtag.patch.fasta"
 
 #==============================================================================
 # FUNCTIONS
@@ -59,7 +64,8 @@ section "RAGTAG SCAFFOLDING PIPELINE — START"
 
 mkdir -p "${LOG_DIR}" "${SCAFFOLD_DIR}" "${PATCH_DIR}" "${QC_DIR}"
 
-[[ -f "${INPUT_ASSEMBLY}" ]]   || die "Input assembly not found: ${INPUT_ASSEMBLY}"
+[[ -f "${INPUT_ASSEMBLY}" ]]  \
+    || die "Input assembly not found: ${INPUT_ASSEMBLY}"
 [[ -f "${REFERENCE_GENOME}" ]] || die "Reference genome not found: ${REFERENCE_GENOME}"
 
 mamba run -n ragtag ragtag.py --help &> /dev/null \
