@@ -96,24 +96,59 @@ mamba run -n seqkit seqkit grep -f ./braker_annotation/best_ids.txt ./braker_ann
 grep -c "^>" ./braker_annotation/braker.aa
 grep -c "^>" ./braker_annotation/braker.longest.faa
 
-
-
 #mamba create -n eggnog-mapper -c bioconda eggnog-mapper
 
-#mamba run -n eggnog-mapper download_eggnog_data.py -y --data_dir ./eggnog_data
+#mkdir ./eggnog_mapper_annotation
 
-#mamba run -n eggnog-mapper emapper.py \
-#  -i Tharzianum_T11W_proteins.faa \
+#mamba run -n eggnog_mapper download_eggnog_data.py -y --data_dir ./eggnog_mapper_annotation
+
+#mamba run -n eggnog_mapper emapper.py -i ./braker_annotation/braker.longest.faa \
 #  --itype proteins \
-#  -m diamond \
-#  --tax_scope Fungi \
-#  --target_orthologs all \
-#  --go_evidence non-electronic \
-#  --pfam_realign denovo \
-#  --output Tharzianum_T11W_functional \
-#  --output_dir ./eggnog_annotation \
-#  --cpu 12 \
-#  --data_dir ./eggnog_data
+#  -m mmseqs \
+#  --data_dir ./eggnog_mapper_annotation \
+#  -o trichoderma_annotation \
+#  --output_dir ./eggnog_mapper_annotation \
+#  --cpu 12
+
+mamba create -n diamond -c bioconda diamond
+
+mkdir -p ./diamond_annotation
+
+cd diamond_annotation
+wget https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+cd ..
+
+mamba run -n diamond diamond makedb --in ./diamond_annotation/uniprot_sprot.fasta.gz -d swissprot
+
+mamba run -n diamond diamond blastp -d swissprot \
+  -q ./braker_annotation/braker.longest.faa \
+  -o ./diamond_annotation/trichoderma_swissprot_annotations.txt \
+  --outfmt 6 qseqid sseqid pident length evalue bitscore stitle \
+  --max-target-seqs 1 \
+  --evalue 1e-5 \
+  --threads 12 \
+  --sensitive
+
+
+mamba create -n interproscan -c bioconda interproscan
+
+mkdir -p interproscan_annotation
+
+sed 's/\*//g' ./braker_annotation/braker.longest.faa > ./braker_annotation/braker.longest.clean.faa
+grep -c "\*" braker_annotation/braker.longest.clean.faa
+
+mamba run -n interproscan hmmpress ~/miniforge3/envs/interproscan/share/InterProScan/data/superfamily/1.75/hmmlib_1.75
+
+mamba run -n interproscan interproscan.sh \
+  -i braker_annotation/braker.longest.clean.faa \
+  -appl TIGRFAM,FunFam,SFLD,SUPERFAMILY,PANTHER,Gene3D,Hamap,ProSiteProfiles,Coils,SMART,PRINTS,PIRSR,AntiFam,Pfam,MobiDBLite,PIRSF \
+  -f TSV,GFF3 \
+  -goterms \
+  -iprlookup \
+  -pa \
+  -cpu 12 \
+  -d interproscan_annotation/
+
 
 mamba create -n orthofinder -c bioconda orthofinder
 

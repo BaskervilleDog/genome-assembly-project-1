@@ -18,3 +18,8 @@ Augustus/
 braker_annotation/
 comparative_genomics/
 agat_log_braker/
+diamond_annotation/
+interproscan_annotation/
+run/
+temp/
+gmes_linux_64_4/
