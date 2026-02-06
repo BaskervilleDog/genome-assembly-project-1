@@ -23,3 +23,7 @@ interproscan_annotation/
 run/
 temp/
 gmes_linux_64_4/
+master_annotation/
+genome_package/
+dbcan_annotation/
+antismash_annotation/

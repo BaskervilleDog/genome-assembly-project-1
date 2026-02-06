@@ -150,6 +150,67 @@ mamba run -n interproscan interproscan.sh \
   -d interproscan_annotation/
 
 
+head -20 interproscan_annotation/braker.longest.clean.faa.tsv
+cut -f1 interproscan_annotation/braker.longest.clean.faa.tsv | sort -u | wc -l
+
+cut -f4 interproscan_annotation/braker.longest.clean.faa.tsv | sort | uniq -c | sort -rn
+
+grep "^Pfam" interproscan_annotation/braker.longest.clean.faa.tsv | cut -f1,6 | head -20
+
+grep -E "Pfam|PANTHER|SMART|PRINTS|SUPERFAMILY|PIRSF|TIGRFAM|Gene3D|FunFam|SFLD" interproscan_annotation/braker.longest.clean.faa.tsv > interproscan_annotation/functional_annotations.tsv
+
+cut -f1 interproscan_annotation/functional_annotations.tsv | sort -u | wc -l
+
+grep -iE "glycos|hydrolase|chitinase|glucanase|cellulase|GH[0-9]|protease|peptidase|carbohydrate|kinase|transferase" interproscan_annotation/functional_annotations.tsv
+
+
+
+mamba create -n dbcan -c bioconda dbcan
+
+mkdir ./dbcan_annotation
+
+mamba run -n dbcan run_dbcan database --db_dir ./dbcan_annotation/dbcan_db --aws_s3
+
+mamba run -n dbcan run_dbcan CAZyme_annotation \
+  --input_raw_data ./braker_annotation/braker.longest.clean.faa \
+  --output_dir ./dbcan_annotation \
+  --db_dir ./dbcan_annotation/dbcan_db \
+  --mode protein \
+  --threads 12
+
+
+mamba create -n antismash -c bioconda antismash
+
+mkdir ./antismash_annotation
+
+mamba run -n antismash download-antismash-databases
+
+grep ">" ./braker_annotation/braker.longest.clean.faa | sed 's/>//' | sed 's/ .*//' > ./braker_annotation/longest_isoform_ids.txt
+
+grep -f ./braker_annotation/longest_isoform_ids.txt ./braker_annotation/braker.gff3 > ./braker_annotation/braker.longest.gff3
+
+echo "##gff-version 3" > ./braker_annotation/braker.longest.clean.gff3
+cat ./braker_annotation/braker.longest.gff3 >> ./braker_annotation/braker.longest.clean.gff3
+
+mamba run -n antismash antismash \
+  --taxon fungi \
+  --output-dir ./antismash_annotation \
+  --genefinding-tool none \
+  --genefinding-gff3 ./braker_annotation/braker.longest.clean.gff3 \
+  --cpus 12 \
+  ./flye_assembly/ragtag_output/ragtag.scaffold.fasta \
+  --fullhmmer \
+  --clusterhmmer \
+  --tigrfam \
+  --asf \
+  --cb-general \
+  --pfam2go \
+  --tfbs \
+  --smcog-trees
+
+
+
+
 mamba create -n orthofinder -c bioconda orthofinder
 
 mkdir ./comparative_genomics/protein_sequences -p
