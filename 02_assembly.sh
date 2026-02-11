@@ -5,8 +5,7 @@
 # Purpose:
 #   De novo genome assembly using PacBio long reads with three independent
 #   assemblers (Flye, Raven, wtdbg2), followed by Illumina short-read
-#   polishing with Pilon. Produces high-quality genome assemblies suitable
-#   for publication.
+#   polishing with Pilon.
 #
 # Biological Context:
 #   - Long reads (PacBio RS2/Sequel) provide contiguity across repeats
@@ -30,19 +29,10 @@
 #   seqkit, filtlong, flye, raven, wtdbg2, bwa, samtools, pilon,
 #   fastqc, multiqc, fastp, quast, busco
 #
-# Usage:
-#   ./assembly_pipeline.sh \
-#     --pacbio reads.fastq.gz \
-#     --illumina-r1 lib1_R1.fq.gz,lib2_R1.fq.gz \
-#     --illumina-r2 lib1_R2.fq.gz,lib2_R2.fq.gz \
-#     --genome-size 4.5m \
-#     --sample-id SAMPLE001 \
-#     --outdir results \
-#     --threads 16
 #
-# Author: [Your Name]
+# Author: Gianlucca de Urzêda Alves
 # Version: 2.0
-# Date: 2024-XX-XX
+# Date: 11-02-2026
 #==============================================================================
 
 #set -euo pipefail
