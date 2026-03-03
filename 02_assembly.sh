@@ -479,6 +479,8 @@ METRICS_DIR="${OUTDIR}/${SAMPLE_ID}/assembly_metrics"
 LOG_DIR="${OUTDIR}/${SAMPLE_ID}/logs"
 TRIM_DIR="${OUTDIR}/${SAMPLE_ID}/trimmed_reads"
 SCAFFOLD_DIR="${OUTDIR}/${SAMPLE_ID}/scaffolded_assemblies"
+QUAST_DIR="${METRICS_DIR}/quast"
+BUSCO_DIR="${METRICS_DIR}/busco"
 
 # Create all subdirectories
 mkdir -p \
@@ -512,8 +514,7 @@ mkdir -p \
   "${LOG_DIR}/polishing" \
   "${TRIM_DIR}"
 
-QUAST_DIR="${METRICS_DIR}/quast"
-BUSCO_DIR="${METRICS_DIR}/busco"
+
 
 # Create metadata file
 METADATA_FILE="${OUTDIR}/${SAMPLE_ID}/pipeline_metadata.txt"

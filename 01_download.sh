@@ -1,6 +1,6 @@
 #!/bin/bash
 #==============================================================================
-# GENOME DATA DOWNLOAD + QC PIPELINE
+# GENOME DATA DOWNLOAD
 #==============================================================================
 # Author : Gianlucca de Urzêda Alves
 # Date   : 28/01/2026
@@ -10,8 +10,7 @@
 # - Perform quality control on Illumina and PacBio reads
 #
 # Tools:
-# mamba | seqfetcher | sra-tools | seqkit | fastqc | multiqc
-# fastp | nanoplot | longQC | filtlong
+# mamba | seqfetcher
 #==============================================================================
 
 set -euo pipefail
