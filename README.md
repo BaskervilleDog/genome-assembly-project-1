@@ -76,10 +76,10 @@ Flye was selected for polishing because it produced the highest contiguity while
 |----------|----------|
 | MultiQC (raw reads) | [multiqc_raw.html](results/qc/multiqc_raw.html) |
 | MultiQC (filtered reads) | [multiqc_filtered.html](results/qc/multiqc_filtered.html) |
-| BUSCO comparisons | [assembly/raw](results/assembly/raw/) |
-| Final BUSCO | [busco.txt](results/assembly/polished/busco.txt) |
-| QUAST | [quast.tsv](results/assembly/polished/quast.tsv) |
-| Merqury QV | [merqury_qv.txt](results/assembly/polished/merqury_qv.txt) |
+| BUSCO on raw assemblies | [assembly/raw](results/assembly/raw/) |
+| BUSCO on polished assembly | [busco.txt](results/assembly/polished/busco.txt) |
+| QUAST on polished assembly | [quast.tsv](results/assembly/polished/quast.tsv) |
+| Merqury QV on polished assembly | [merqury_qv.txt](results/assembly/polished/merqury_qv.txt) |
 | RagTag statistics | [scaffolding](results/scaffolding/) |
 | RepeatMasker summary | [repeat_masking](results/repeat_masking/) |
 
