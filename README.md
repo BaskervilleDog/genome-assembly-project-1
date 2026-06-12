@@ -1,3 +1,7 @@
+![BUSCO](https://img.shields.io/badge/BUSCO-99.8%25-success)
+![QV](https://img.shields.io/badge/Merqury_QV-34.4-blue)
+![Assembly_Size](https://img.shields.io/badge/Assembly-38.95_Mb-orange)
+
 # 🧬 Hybrid Genome Assembly Pipeline — *Trichoderma harzianum* TW11
 
 A reproducible, multi-assembler pipeline for *de novo* genome assembly using PacBio long reads and Illumina short-read polishing, developed for the fungal *Trichoderma harzianum* TW11.
@@ -42,37 +46,40 @@ Using multiple assemblers mitigates algorithm-specific biases and allows objecti
 | Total length | 38.95 Mb |
 | Number of contigs | 70 |
 | Number of scaffolds | 17 |
-| Scaffold N50 | 1 Mbp |
+| Scaffold N50 | 1.63 Mbp |
 | Gap content | 0.000% |
 | BUSCO completeness | 99.8% (`hypocreaceae_odb12`) |
 | Merqury QV | 34.4 |
+| Repeat content | 3.80% |
 
 ---
 
-## Repository Structure
+## Key Results
 
-```
-project/
-├── 00_downloads/               # Raw FASTQ files from SRA
-├── 01_qc_raw/                  # SeqKit stats, LongReadSum, FastQC, MultiQC on raw reads
-├── 02_filtered/
-│   ├── pacbio/                 # fastplong-filtered long reads
-│   └── illumina/               # fastp-filtered short reads
-├── 03_qc_filtered/             # SeqKit stats, FastQC, MultiQC on filtered reads
-├── 04_contaminants/            # Kraken2 classification reports and classified reads
-├── 05_decontaminated/          # Unclassified (host-free) reads
-├── 06_assemblies/              # Raw assembler outputs (flye/, raven/, wtdbg2/)
-├── 07_assembly_evaluation/
-│   ├── raw_assembly/           # BUSCO, QUAST, Merqury on pre-polishing assemblies
-│   └── polished_assembly/      # BUSCO, QUAST, Merqury on final assembly
-├── 08_polishing/
-│   └── longreads/              # PAF alignments, Racon rounds, Polypolish SAMs, NextPolish
-├── 09_ragtag/                  # RagTag scaffold output and evaluation
-├── 10_repeat_masking/
-│   ├── repeatmodeler/          # De novo repeat library
-│   └── repeatmasker/           # Soft-masked assembly
-└── logs/                       # All stdout/stderr logs
-```
+### Assembler Comparison
+
+| Assembler | BUSCO (%) | Contigs | N50 |
+|------------|------------|------------|------------|
+| Flye | 99.8 | 70 | 1.63 Mb |
+| Raven | 99.8 | 85 | 865 kb |
+| wtdbg2 | 99.1 | 129 | 699 kb |
+
+Flye was selected for polishing because it produced the highest contiguity while maintaining BUSCO completeness comparable to Raven.
+
+---
+
+## Generated Results
+
+| Result | Location |
+|----------|----------|
+| MultiQC (raw reads) | `results/qc/multiqc_raw.html` |
+| MultiQC (filtered reads) | `results/qc/multiqc_filtered.html` |
+| BUSCO comparisons | `results/assembly/raw/` |
+| Final BUSCO | `results/assembly/polished/busco.txt` |
+| QUAST | `results/assembly/polished/quast.tsv` |
+| Merqury QV | `results/assembly/polished/merqury_qv.txt` |
+| RagTag statistics | `results/scaffolding/` |
+| RepeatMasker summary | `results/repeat_masking/` |
 
 ---
 
@@ -183,7 +190,7 @@ Three complementary tools are applied at two stages (raw assembler outputs and f
 C:99.8% [S:99.5%, D:0.3%], F:0.0%, M:0.1%, n:4323, E:1.6%
 ```
 
-**Merqury QV = 34.4** (~1 error per 2,800 bp). The 1.6% internal stop codon rate (E:1.6%) reflects residual frameshifts from indel errors, consistent with QV 34.4. This likely represents the ceiling achievable with the available Illumina coverage depth rather than a fixable error.
+**Merqury QV = 34.4** (~1 error per 2,800 bp). BUSCO reported an internal stop codon rate of 1.6%, suggesting residual sequence errors remain despite polishing.
 
 ### Stage 8 — Reference-Guided Scaffolding
 
@@ -239,6 +246,31 @@ Soft-masked assembly ← ready for annotation
 ```
 
 ---
+
+## Repository Structure
+
+```
+project/
+├── 00_downloads/               # Raw FASTQ files from SRA
+├── 01_qc_raw/                  # SeqKit stats, LongReadSum, FastQC, MultiQC on raw reads
+├── 02_filtered/
+│   ├── pacbio/                 # fastplong-filtered long reads
+│   └── illumina/               # fastp-filtered short reads
+├── 03_qc_filtered/             # SeqKit stats, FastQC, MultiQC on filtered reads
+├── 04_contaminants/            # Kraken2 classification reports and classified reads
+├── 05_decontaminated/          # Unclassified (host-free) reads
+├── 06_assemblies/              # Raw assembler outputs (flye/, raven/, wtdbg2/)
+├── 07_assembly_evaluation/
+│   ├── raw_assembly/           # BUSCO, QUAST, Merqury on pre-polishing assemblies
+│   └── polished_assembly/      # BUSCO, QUAST, Merqury on final assembly
+├── 08_polishing/
+│   └── longreads/              # PAF alignments, Racon rounds, Polypolish SAMs, NextPolish
+├── 09_ragtag/                  # RagTag scaffold output and evaluation
+├── 10_repeat_masking/
+│   ├── repeatmodeler/          # De novo repeat library
+│   └── repeatmasker/           # Soft-masked assembly
+└── logs/                       # All stdout/stderr logs
+```
 
 ## Dependencies
 
