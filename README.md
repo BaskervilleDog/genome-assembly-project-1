@@ -136,7 +136,7 @@ Decontaminated PacBio reads
         │                                      │
      [Flye]                   [Raven]      [wtdbg2]
    Repeat graph           String graph    Fuzzy dBG
-        │                      │              │
+        │                       │              │
         └──────────────┬────────┘──────────────┘
                        ▼
            BUSCO + QUAST evaluation
