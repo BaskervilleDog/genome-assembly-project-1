@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Gianlucca de Urzeda Alves">
-<meta name="dcterms.date" content="2026-06-11">
+<meta name="dcterms.date" content="2026-06-12">
 
 <title>Genome Assembly Pipeline — Trichoderma harzianum TW11</title>
 <style>
@@ -2259,6 +2259,7 @@ vertical-align: -.125em;
   <ul class="collapse">
   <li><a href="#tool-repeatmodeler2-de-novo-repeat-library-construction" id="toc-tool-repeatmodeler2-de-novo-repeat-library-construction" class="nav-link" data-scroll-target="#tool-repeatmodeler2-de-novo-repeat-library-construction"><span class="header-section-number">11.1</span> Tool: RepeatModeler2 — de novo repeat library construction</a></li>
   <li><a href="#tool-repeatmasker-soft-masking-the-assembly" id="toc-tool-repeatmasker-soft-masking-the-assembly" class="nav-link" data-scroll-target="#tool-repeatmasker-soft-masking-the-assembly"><span class="header-section-number">11.2</span> Tool: RepeatMasker — soft-masking the assembly</a></li>
+  <li><a href="#moving-all-results-to-a-folder" id="toc-moving-all-results-to-a-folder" class="nav-link" data-scroll-target="#moving-all-results-to-a-folder"><span class="header-section-number">11.3</span> Moving all results to a folder</a></li>
   </ul></li>
   <li><a href="#summary-and-next-steps" id="toc-summary-and-next-steps" class="nav-link" data-scroll-target="#summary-and-next-steps"><span class="header-section-number">12</span> Summary and Next Steps</a>
   <ul class="collapse">
@@ -2293,7 +2294,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 11, 2026</p>
+      <p class="date">June 12, 2026</p>
     </div>
   </div>
   
@@ -2415,7 +2416,10 @@ vertical-align: -.125em;
 ├── 10_repeat_masking/
 │   ├── repeatmodeler/      # De novo repeat library
 │   └── repeatmasker/       # Soft-masked assembly
-└── logs/                   # All stdout/stderr logs</code></pre>
+├── envs/                   # Conda environments for each tool
+└── logs/                   # All stdout/stderr logs
+
+</code></pre>
 <hr>
 </section>
 <section id="data-download" class="level1" data-number="3">
@@ -2424,7 +2428,7 @@ vertical-align: -.125em;
 <h2 data-number="3.1" class="anchored" data-anchor-id="tool-seqfetcher"><span class="header-section-number">3.1</span> Tool: SeqFetcher</h2>
 <p><strong>Purpose:</strong> Download raw FASTQ files from NCBI SRA for three accessions (PacBio and Illumina).</p>
 <p><strong>Functionality:</strong> SeqFetcher wraps the underlying NCBI tools — <code>fasterq-dump</code>, <code>datasets</code>, and related utilities such as SRA Toolkit — into a single command that handles multiple accessions simultaneously. For a project with three distinct sequencing runs, this reduces setup time and ensures consistent file naming.</p>
-<div id="184afdf9" class="cell" data-execution_count="1">
+<div id="ba2abcfe" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> accession_list.txt <span class="op">&lt;&lt; EOF</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="st">SRR10848482</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="st">SRR10848483</span></span>
@@ -2460,7 +2464,7 @@ vertical-align: -.125em;
 <p>SeqKit will report Q=0 for PacBio reads downloaded from SRA. Quality scores were stripped or replaced with placeholders during the SRA download process. The reads are valid; quality-based filtering is not applied to long reads as a result (see Section 5.1).</p>
 </div>
 </div>
-<div id="488a04be" class="cell" data-execution_count="2">
+<div id="357dfbbe" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Long reads</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> seqkit seqkit <span class="dt">\</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    stats <span class="at">-a</span> 00_downloads/SRR10848482_1.fastq.gz <span class="dt">\</span></span>
@@ -2480,7 +2484,7 @@ vertical-align: -.125em;
 <h2 data-number="4.2" class="anchored" data-anchor-id="tool-longreadsum-pacbio-read-length-profiling"><span class="header-section-number">4.2</span> Tool: LongReadSum — PacBio read-length profiling</h2>
 <p><strong>Purpose:</strong> Visual read-length distributions and summary HTML reports for PacBio data.</p>
 <p><strong>Functionality:</strong> For PacBio data where quality scores are absent, read-length distribution is the primary QC metric. LongReadSum provides read-length histograms and N50 distribution plots that FastQC cannot produce meaningfully for long reads. It is used to confirm that the PacBio library contains adequate long reads (&gt;5 kb) to support contiguous assembly and to visualise the read-length profile.</p>
-<div id="a6ed6986" class="cell" data-execution_count="3">
+<div id="3118cecd" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> longreadsum longreadsum <span class="dt">\</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    fq <span class="at">-i</span> 00_downloads/SRR10848482_1.fastq.gz <span class="dt">\</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> 01_qc_raw/ <span class="dt">\</span></span>
@@ -2492,7 +2496,7 @@ vertical-align: -.125em;
 <h2 data-number="4.3" class="anchored" data-anchor-id="tool-fastqc-illumina-per-base-quality-profiling"><span class="header-section-number">4.3</span> Tool: FastQC — Illumina per-base quality profiling</h2>
 <p><strong>Purpose:</strong> Per-base quality score distributions, GC content, and adapter detection for Illumina reads.</p>
 <p><strong>Functionality:</strong> FastQC is the standard first-pass QC tool for Illumina data and is required to identify adapter contamination, base quality drop-offs toward read 3’ ends, and per-tile quality issues. Its HTML reports are also directly consumed by MultiQC for cross-sample aggregation. Applied to all four Illumina FASTQ files in a single command.</p>
-<div id="8727e284" class="cell" data-execution_count="4">
+<div id="d513a090" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> fastqc fastqc <span class="dt">\</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">-t</span> 18 <span class="dt">\</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> 01_qc_raw/ <span class="dt">\</span></span>
@@ -2508,7 +2512,7 @@ vertical-align: -.125em;
 <h2 data-number="4.4" class="anchored" data-anchor-id="tool-multiqc-aggregate-qc-report"><span class="header-section-number">4.4</span> Tool: MultiQC — aggregate QC report</h2>
 <p><strong>Purpose:</strong> Merge all FastQC, fastp, and other tool outputs into a single interactive HTML report.</p>
 <p><strong>Functionality:</strong> With four Illumina FASTQ files across two runs, comparing quality metrics file-by-file is error-prone. MultiQC aggregates all FastQC reports into a single interactive report where adapter content, quality score distributions, and duplication rates are visible across all samples simultaneously, making cross-run batch effects immediately apparent. It is run both pre- and post-filtering to confirm the effect.</p>
-<div id="6eceff23" class="cell" data-execution_count="5">
+<div id="a369b489" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> multiqc multiqc <span class="dt">\</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    01_qc_raw/ <span class="dt">\</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> 01_qc_raw/multiqc_report</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2549,7 +2553,7 @@ vertical-align: -.125em;
 </tr>
 </tbody>
 </table>
-<div id="571e786c" class="cell" data-execution_count="6">
+<div id="76bfdd7b" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> fastplong fastplong <span class="dt">\</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">-w</span> 18 <span class="dt">\</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-Q</span> <span class="dt">\</span></span>
@@ -2565,7 +2569,7 @@ vertical-align: -.125em;
 <section id="tool-fastp-illumina-adapter-trimming-and-quality-filtering" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="tool-fastp-illumina-adapter-trimming-and-quality-filtering"><span class="header-section-number">5.2</span> Tool: fastp — Illumina adapter trimming and quality filtering</h2>
 <p><strong>Purpose:</strong> Adapter removal, quality filtering, and per-read error correction for Illumina paired-end reads.</p>
-<p><strong>Rationale:</strong> fastp combines adapter trimming, quality filtering, and read-level error correction into a single fast pass, replacing what previously required separate tools (Trimmomatic for trimming, FastQC for reporting). Key advantages over Trimmomatic include: automatic adapter detection (avoiding hardcoding sequences), overlap-based error correction (<code>--correction</code>) that uses read-pair overlaps to correct sequencing errors before assembly, and built-in HTML/JSON reporting compatible with MultiQC. A minimum quality of Q30 and minimum length of 150 bp were applied to ensure only high-confidence reads feed into short-read polishing.</p>
+<p><strong>Functionality:</strong> fastp combines adapter trimming, quality filtering, and read-level error correction into a single fast pass, replacing what previously required separate tools (Trimmomatic for trimming, FastQC for reporting). Key advantages over Trimmomatic include: automatic adapter detection (avoiding hardcoding sequences), overlap-based error correction (<code>--correction</code>) that uses read-pair overlaps to correct sequencing errors before assembly, and built-in HTML/JSON reporting compatible with MultiQC. A minimum quality of Q30 and minimum length of 150 bp were applied to ensure only high-confidence reads feed into short-read polishing.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2597,7 +2601,7 @@ vertical-align: -.125em;
 </tr>
 </tbody>
 </table>
-<div id="8cb38a91" class="cell" data-execution_count="7">
+<div id="1d1f66e7" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> srr <span class="kw">in</span> SRR10848483 SRR10848484<span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">mamba</span> run <span class="at">-n</span> fastp fastp <span class="dt">\</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">-w</span> 18 <span class="dt">\</span></span>
@@ -2623,8 +2627,8 @@ vertical-align: -.125em;
 <section id="tool-kraken2-taxonomic-read-classification" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="tool-kraken2-taxonomic-read-classification"><span class="header-section-number">6.1</span> Tool: Kraken2 — taxonomic read classification</h2>
 <p><strong>Purpose:</strong> Classify reads against a reference database to identify and remove non-target organism reads before assembly.</p>
-<p><strong>Rationale:</strong> Fungal cultures, especially soil-derived organisms like <em>T. harzianum</em>, frequently carry bacterial and human DNA contamination from culture media, researcher handling, or sequencing reagents. Assembling without decontamination causes chimeric contigs, inflates genome size estimates, and introduces false gene predictions in annotation. Kraken2 uses exact k-mer matching against a reference database and is fast enough to process hundreds of millions of reads in under an hour while maintaining high sensitivity. Reads marked as <strong>unclassified</strong> — those not matching any known organism — are retained as the clean dataset for all downstream assembly steps. Classified (contaminant) reads are saved separately for inspection. Kraken standard database (16Gb) is used, which includes bacterial, archaeal, viral, and human sequences, providinga basic coverage of common contaminants.</p>
-<div id="ee8b5583" class="cell" data-execution_count="8">
+<p><strong>Functionality:</strong> Fungal cultures, especially soil-derived organisms like <em>T. harzianum</em>, frequently carry bacterial and human DNA contamination from culture media, researcher handling, or sequencing reagents. Assembling without decontamination causes chimeric contigs, inflates genome size estimates, and introduces false gene predictions in annotation. Kraken2 uses exact k-mer matching against a reference database and is fast enough to process hundreds of millions of reads in under an hour while maintaining high sensitivity. Reads marked as <strong>unclassified</strong> — those not matching any known organism — are retained as the clean dataset for all downstream assembly steps. Classified (contaminant) reads are saved separately for inspection. Kraken standard database (16Gb) is used, which includes bacterial, archaeal, viral, and human sequences, providinga basic coverage of common contaminants.</p>
+<div id="6cdaabc5" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># PacBio long reads</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> kraken2 kraken2 <span class="dt">\</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--db</span> ~/databases/kraken2_db <span class="dt">\</span></span>
@@ -2675,8 +2679,8 @@ vertical-align: -.125em;
 <section id="tool-flye-primary-long-read-assembler" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="tool-flye-primary-long-read-assembler"><span class="header-section-number">7.1</span> Tool: Flye — primary long-read assembler</h2>
 <p><strong>Purpose:</strong> De novo assembly from PacBio long reads using a repeat-aware graph approach.</p>
-<p><strong>Rationale:</strong> Flye was selected as the primary assembler because it performs consistently well on fungal genomes with significant repeat content and is specifically designed for the coverage levels generated here (~178× PacBio). Its repeat graph explicitly models repetitive sequences during assembly, helping to resolve the transposable elements and tandem repeats common in <em>Trichoderma</em>. The <code>--pacbio-corr</code> mode indicates the input reads have been corrected, adjusting internal error-tolerance parameters. Flye was ultimately selected for polishing based on comparative BUSCO/QUAST results.</p>
-<div id="3231bacb" class="cell" data-execution_count="9">
+<p><strong>Functionality:</strong> Flye was selected as the primary assembler because it performs consistently well on fungal genomes with significant repeat content and is specifically designed for the coverage levels generated here (~178× PacBio). Its repeat graph explicitly models repetitive sequences during assembly, helping to resolve the transposable elements and tandem repeats common in <em>Trichoderma</em>. The <code>--pacbio-corr</code> mode indicates the input reads have been corrected, adjusting internal error-tolerance parameters. Flye was ultimately selected for polishing based on comparative BUSCO/QUAST results.</p>
+<div id="0a2378e3" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> flye292 flye <span class="dt">\</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--pacbio-corr</span> 05_decontaminated/SRR10848482_unclassified.fastq.gz <span class="dt">\</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">--genome-size</span> 40m <span class="dt">\</span></span>
@@ -2689,8 +2693,8 @@ vertical-align: -.125em;
 <section id="tool-raven-fast-de-novo-assembler" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="tool-raven-fast-de-novo-assembler"><span class="header-section-number">7.2</span> Tool: Raven — fast de novo assembler</h2>
 <p><strong>Purpose:</strong> Fast assembly comparison using a Raven graph with internal polishing.</p>
-<p><strong>Rationale:</strong> Raven uses an alternative string-graph approach and incorporates one round of Racon polishing internally as part of its assembly pipeline. It is notably faster and more memory-efficient than Flye, making it practical to run alongside slower assemblers. Raven often produces high contiguity on fungal genomes, providing a valuable benchmark for comparison.</p>
-<div id="75dc22b2" class="cell" data-execution_count="10">
+<p><strong>Functionality:</strong> Raven uses an alternative string-graph approach and incorporates one round of Racon polishing internally as part of its assembly pipeline. It is notably faster and more memory-efficient than Flye, making it practical to run alongside slower assemblers. Raven often produces high contiguity on fungal genomes, providing a valuable benchmark for comparison.</p>
+<div id="8a96a712" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> raven raven <span class="dt">\</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">--threads</span> 16 <span class="dt">\</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    05_decontaminated/SRR10848482_unclassified.fastq.gz <span class="dt">\</span></span>
@@ -2701,8 +2705,8 @@ vertical-align: -.125em;
 <section id="tool-wtdbg2-fuzzy-de-bruijn-graph-assembler" class="level2" data-number="7.3">
 <h2 data-number="7.3" class="anchored" data-anchor-id="tool-wtdbg2-fuzzy-de-bruijn-graph-assembler"><span class="header-section-number">7.3</span> Tool: wtdbg2 — fuzzy de Bruijn graph assembler</h2>
 <p><strong>Purpose:</strong> Additional assembly comparison using a structurally different graph approach.</p>
-<p><strong>Rationale:</strong> wtdbg2 uses a fuzzy de Bruijn graph rather than an overlap graph or repeat graph, providing a structurally different algorithmic approach compared to Flye and Raven. This increases the probability of identifying the best assembly through empirical evaluation. Consensus generation is run separately via <code>wtpoa-cns</code> after graph construction. The <code>-x rs</code> preset configures error-tolerance parameters for PacBio RS/Sequel reads.</p>
-<div id="4fd38ee9" class="cell" data-execution_count="11">
+<p><strong>Functionality:</strong> wtdbg2 uses a fuzzy de Bruijn graph rather than an overlap graph or repeat graph, providing a structurally different algorithmic approach compared to Flye and Raven. This increases the probability of identifying the best assembly through empirical evaluation. Consensus generation is run separately via <code>wtpoa-cns</code> after graph construction. The <code>-x rs</code> preset configures error-tolerance parameters for PacBio RS/Sequel reads.</p>
+<div id="9b887a96" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> wtdbg2 wtdbg2 <span class="dt">\</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">-x</span> rs <span class="at">-g</span> 40m <span class="at">-t</span> 16 <span class="dt">\</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-i</span> 05_decontaminated/SRR10848482_unclassified.fastq.gz <span class="dt">\</span></span>
@@ -2726,8 +2730,8 @@ vertical-align: -.125em;
 <section id="tool-minimap2-read-to-assembly-alignment" class="level2" data-number="8.1">
 <h2 data-number="8.1" class="anchored" data-anchor-id="tool-minimap2-read-to-assembly-alignment"><span class="header-section-number">8.1</span> Tool: minimap2 — read-to-assembly alignment</h2>
 <p><strong>Purpose:</strong> Align PacBio long reads back to the assembly, producing PAF format alignments for Racon.</p>
-<p><strong>Rationale:</strong> minimap2 is the standard aligner for long-read-to-assembly mapping and has largely superseded older PacBio-specific aligners (BLASR, NGMLR) for polishing workflows. The <code>-x map-pb</code> preset is calibrated for PacBio CLR reads with appropriate gap penalty parameters for the PacBio error profile. Applied before each Racon round with the updated assembly as reference each time.</p>
-<div id="10f628c1" class="cell" data-execution_count="12">
+<p><strong>Functionality:</strong> minimap2 is the standard aligner for long-read-to-assembly mapping and has largely superseded older PacBio-specific aligners (BLASR, NGMLR) for polishing workflows. The <code>-x map-pb</code> preset is calibrated for PacBio CLR reads with appropriate gap penalty parameters for the PacBio error profile. Applied before each Racon round with the updated assembly as reference each time.</p>
+<div id="eef3753e" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> minimap2 minimap2 <span class="dt">\</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">-t</span> 18 <span class="at">-x</span> map-pb <span class="dt">\</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    06_assemblies/flye/assembly.fasta <span class="dt">\</span></span>
@@ -2739,8 +2743,8 @@ vertical-align: -.125em;
 <section id="tool-racon-long-read-consensus-polishing-2-rounds" class="level2" data-number="8.2">
 <h2 data-number="8.2" class="anchored" data-anchor-id="tool-racon-long-read-consensus-polishing-2-rounds"><span class="header-section-number">8.2</span> Tool: Racon — long-read consensus polishing (2 rounds)</h2>
 <p><strong>Purpose:</strong> Correct assembly errors using long-read alignment consensus. Applied for two consecutive rounds.</p>
-<p><strong>Rationale:</strong> Racon performs consensus-based polishing by voting across all reads aligned to each position, correcting indels and substitutions introduced during assembly. Two rounds are applied: the first round corrects the largest errors; the second catches residual errors in regions with poor alignment coverage in round 1. A third round yields diminishing returns and is not applied. Long-read polishing precedes short-read polishing because it corrects structural errors that would otherwise confuse short-read alignments.</p>
-<div id="69fded81" class="cell" data-execution_count="13">
+<p><strong>Functionality:</strong> Racon performs consensus-based polishing by voting across all reads aligned to each position, correcting indels and substitutions introduced during assembly. Two rounds are applied: the first round corrects the largest errors; the second catches residual errors in regions with poor alignment coverage in round 1. A third round yields diminishing returns and is not applied. Long-read polishing precedes short-read polishing because it corrects structural errors that would otherwise confuse short-read alignments.</p>
+<div id="6e430861" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Round 1</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> racon1420 racon <span class="dt">\</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-t</span> 18 <span class="dt">\</span></span>
@@ -2770,8 +2774,8 @@ vertical-align: -.125em;
 <section id="tool-bwa-mem-polypolish-short-read-polishing" class="level2" data-number="8.3">
 <h2 data-number="8.3" class="anchored" data-anchor-id="tool-bwa-mem-polypolish-short-read-polishing"><span class="header-section-number">8.3</span> Tool: BWA-MEM + Polypolish — short-read polishing</h2>
 <p><strong>Purpose:</strong> Use all-alignment short-read mapping to correct SNPs and indels including in repetitive regions.</p>
-<p><strong>Rationale:</strong> Polypolish differs from Pilon and other short-read polishers by using <strong>all</strong> alignments (<code>bwa mem -a</code>) rather than only uniquely mapping reads. This allows it to polish repetitive regions where short reads have multiple equally valid alignment positions — regions that Pilon skips entirely. Both Illumina runs (SRR10848483 and SRR10848484) are aligned separately, each with both mates processed individually. All four SAM files are then jointly used in polishing to maximise coverage (~60× combined) across all assembly regions. SAM and BWA index files are removed after polishing to conserve disk space.</p>
-<div id="d453c6d8" class="cell" data-execution_count="14">
+<p><strong>Functionality:</strong> Polypolish differs from Pilon and other short-read polishers by using <strong>all</strong> alignments (<code>bwa mem -a</code>) rather than only uniquely mapping reads. This allows it to polish repetitive regions where short reads have multiple equally valid alignment positions — regions that Pilon skips entirely. Both Illumina runs (SRR10848483 and SRR10848484) are aligned separately, each with both mates processed individually. All four SAM files are then jointly used in polishing to maximise coverage (~60× combined) across all assembly regions. SAM and BWA index files are removed after polishing to conserve disk space.</p>
+<div id="b8f05741" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Index + align (abbreviated — see full pipeline document for all four SAMs)</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> bwa bwa index <span class="dt">\</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    08_polishing/longreads/pacbio_flye_assembly.racon2.fasta</span>
@@ -2812,8 +2816,8 @@ vertical-align: -.125em;
 <section id="tool-nextpolish-final-snvindel-correction-2-rounds" class="level2" data-number="8.4">
 <h2 data-number="8.4" class="anchored" data-anchor-id="tool-nextpolish-final-snvindel-correction-2-rounds"><span class="header-section-number">8.4</span> Tool: NextPolish — final SNV/indel correction (2 rounds)</h2>
 <p><strong>Purpose:</strong> Final short-read polishing targeting residual SNPs and indels, with particular accuracy for homopolymer regions.</p>
-<p><strong>Rationale:</strong> NextPolish is more accurate than Pilon for short-read polishing of long-read assemblies, particularly for indel correction in homopolymer runs which are a known error source in PacBio assemblies. It is applied after Polypolish as a final refinement step. Both Illumina runs are included in the <code>sgs.fofn</code> file to maximise coverage. A second round was applied given the initial QV 34.4 score and the 1.6% BUSCO internal stop codon rate (E:1.6%), both of which suggest residual polishing potential. <code>task = best</code> runs all available polishing sub-tasks internally.</p>
-<div id="47352bb0" class="cell" data-execution_count="15">
+<p><strong>Functionality:</strong> NextPolish is more accurate than Pilon for short-read polishing of long-read assemblies, particularly for indel correction in homopolymer runs which are a known error source in PacBio assemblies. It is applied after Polypolish as a final refinement step. Both Illumina runs are included in the <code>sgs.fofn</code> file to maximise coverage. A second round was applied given the initial QV 34.4 score and the 1.6% BUSCO internal stop codon rate (E:1.6%), both of which suggest residual polishing potential. <code>task = best</code> runs all available polishing sub-tasks internally.</p>
+<div id="4293d117" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="va">PROJECT_DIR</span><span class="op">=</span><span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> 08_polishing/longreads/run.cfg <span class="op">&lt;&lt; EOF</span></span>
@@ -2881,7 +2885,7 @@ vertical-align: -.125em;
 <section id="tool-busco-gene-space-completeness" class="level2" data-number="9.1">
 <h2 data-number="9.1" class="anchored" data-anchor-id="tool-busco-gene-space-completeness"><span class="header-section-number">9.1</span> Tool: BUSCO — gene space completeness</h2>
 <p><strong>Purpose:</strong> Assess what proportion of expected single-copy ortholog genes are present and complete in the assembly.</p>
-<p><strong>Rationale:</strong> BUSCO is the gold-standard metric for eukaryotic genome completeness. The <code>hypocreaceae_odb12</code> lineage database is specific to the order Hypocreales, which includes <em>Trichoderma</em>, making it the most precise available reference set (4,323 BUSCOs). BUSCO is run on all three raw assembler outputs to select the best assembly for polishing, and again on the polished assembly to confirm no completeness was lost. The <code>E:</code> metric (BUSCOs with internal stop codons) is particularly informative post-polishing as it reflects residual frameshift errors.</p>
+<p><strong>Functionality:</strong> BUSCO is the gold-standard metric for eukaryotic genome completeness. The <code>hypocreaceae_odb12</code> lineage database is specific to the order Hypocreales, which includes <em>Trichoderma</em>, making it the most precise available reference set (4,323 BUSCOs). BUSCO is run on all three raw assembler outputs to select the best assembly for polishing, and again on the polished assembly to confirm no completeness was lost. The <code>E:</code> metric (BUSCOs with internal stop codons) is particularly informative post-polishing as it reflects residual frameshift errors.</p>
 <p><strong>Final polished assembly result:</strong></p>
 <pre><code>C:99.8% [S:99.5%, D:0.3%], F:0.0%, M:0.1%, n:4323, E:1.6%
 4316  Complete BUSCOs
@@ -2903,7 +2907,7 @@ vertical-align: -.125em;
 <p>The 69 BUSCOs with internal stop codons reflect residual indel errors that create frameshifts. This is common after long-read assembly even with extensive polishing. At 1.6%, it is not alarming but indicates QV is below the annotation-ideal threshold of QV ≥ 40.</p>
 </div>
 </div>
-<div id="d83e67d1" class="cell" data-execution_count="16">
+<div id="3c7457e8" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> assembler <span class="kw">in</span> flye raven wtdbg2<span class="kw">;</span> <span class="cf">do</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="va">$assembler</span> <span class="kw">in</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>        <span class="ss">flye</span><span class="kw">)</span>   <span class="va">asm</span><span class="op">=</span>06_assemblies/flye/assembly.fasta <span class="cf">;;</span></span>
@@ -2923,9 +2927,9 @@ vertical-align: -.125em;
 <section id="tool-quast-assembly-contiguity-statistics" class="level2" data-number="9.2">
 <h2 data-number="9.2" class="anchored" data-anchor-id="tool-quast-assembly-contiguity-statistics"><span class="header-section-number">9.2</span> Tool: QUAST — assembly contiguity statistics</h2>
 <p><strong>Purpose:</strong> Structural metrics including N50, contig count, total length, and gap content.</p>
-<p><strong>Rationale:</strong> QUAST provides the contiguity metrics that BUSCO does not measure. These are essential for comparing the three assembler outputs — two assemblies with identical BUSCO scores can differ substantially in N50 and fragmentation. When a reference genome is supplied (<code>-r</code>), QUAST also calculates misassembly rates, genome fraction covered, and NGA50 (N50 adjusted for aligned fraction). The <code>--fragmented</code> flag is used during reference comparison because the reference itself may be fragmented, preventing false misassembly calls at reference scaffold boundaries.</p>
+<p><strong>Functionality:</strong> QUAST provides the contiguity metrics that BUSCO does not measure. These are essential for comparing the three assembler outputs — two assemblies with identical BUSCO scores can differ substantially in N50 and fragmentation. When a reference genome is supplied (<code>-r</code>), QUAST also calculates misassembly rates, genome fraction covered, and NGA50 (N50 adjusted for aligned fraction). The <code>--fragmented</code> flag is used during reference comparison because the reference itself may be fragmented, preventing false misassembly calls at reference scaffold boundaries.</p>
 <p><strong>Final polished assembly result:</strong> 70 contigs, 0.000% gaps, scaffold N50 = 1 Mbp, total length = 38.95 Mb.</p>
-<div id="de1e0145" class="cell" data-execution_count="17">
+<div id="670220ee" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> quast quast <span class="dt">\</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">${POLISHED}</span> <span class="dt">\</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-r</span> <span class="va">${REF}</span> <span class="dt">\</span></span>
@@ -2939,9 +2943,9 @@ vertical-align: -.125em;
 <section id="tool-merqury-reference-free-base-accuracy-qv" class="level2" data-number="9.3">
 <h2 data-number="9.3" class="anchored" data-anchor-id="tool-merqury-reference-free-base-accuracy-qv"><span class="header-section-number">9.3</span> Tool: Merqury — reference-free base accuracy (QV)</h2>
 <p><strong>Purpose:</strong> Estimate assembly quality value (QV) and per-base error rate without a reference genome.</p>
-<p><strong>Rationale:</strong> BUSCO and QUAST measure completeness and structure but do not quantify base-level accuracy. Merqury fills this gap by comparing the k-mer spectrum of the Illumina reads against k-mers in the assembly: k-mers present in reads but absent from the assembly indicate assembly errors. The resulting QV (Phred-scale) is analogous to sequencing quality scores. A QV ≥ 40 (1 error per 10,000 bp) is the annotation-grade threshold. Both Illumina runs are combined into a single meryl k-mer database (<code>k=21</code>) to maximise k-mer coverage accuracy (~60×).</p>
+<p><strong>Functionality:</strong> BUSCO and QUAST measure completeness and structure but do not quantify base-level accuracy. Merqury fills this gap by comparing the k-mer spectrum of the Illumina reads against k-mers in the assembly: k-mers present in reads but absent from the assembly indicate assembly errors. The resulting QV (Phred-scale) is analogous to sequencing quality scores. A QV ≥ 40 (1 error per 10,000 bp) is the annotation-grade threshold. Both Illumina runs are combined into a single meryl k-mer database (<code>k=21</code>) to maximise k-mer coverage accuracy (~60×).</p>
 <p><strong>Final polished assembly result:</strong> QV = 34.4 — approximately 1 error per 2,800 bp, or ~14,000 residual errors across the 39 Mb assembly. This aligns with the 1.6% BUSCO internal stop codon observation. The QV likely reflects the ceiling achievable with this Illumina coverage depth rather than a fixable error.</p>
-<div id="1d118edd" class="cell" data-execution_count="18">
+<div id="f03703af" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> merqury meryl <span class="dt">\</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    count k=21 <span class="dt">\</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    output 07_assembly_evaluation/polished_assembly/merqury/reads.meryl <span class="dt">\</span></span>
@@ -2968,7 +2972,7 @@ vertical-align: -.125em;
 <section id="tool-ragtag-scaffold-reference-guided-contig-ordering" class="level2" data-number="10.1">
 <h2 data-number="10.1" class="anchored" data-anchor-id="tool-ragtag-scaffold-reference-guided-contig-ordering"><span class="header-section-number">10.1</span> Tool: RagTag scaffold — reference-guided contig ordering</h2>
 <p><strong>Purpose:</strong> Order, orient, and join the 70 assembly contigs into pseudochromosomes using a chromosome-level reference.</p>
-<p><strong>Rationale:</strong> The polished assembly contained 70 high-quality contigs with 0% gaps and 1 Mbp N50 — excellent structural quality but lacking chromosome-scale ordering. RagTag uses minimap2 internally to align contigs against a chromosome-level <em>T. harzianum</em> reference (GCA_019097725.1, SYAU_Tha_1.0), ordering and orienting contigs relative to each reference chromosome. This produces a biologically interpretable pseudochromosome assembly that improves gene model continuity during annotation and enables comparative genomic analyses.</p>
+<p><strong>Functionality:</strong> The polished assembly contained 70 high-quality contigs with 0% gaps and 1 Mbp N50 — excellent structural quality but lacking chromosome-scale ordering. RagTag uses minimap2 internally to align contigs against a chromosome-level <em>T. harzianum</em> reference (GCA_019097725.1, SYAU_Tha_1.0), ordering and orienting contigs relative to each reference chromosome. This produces a biologically interpretable pseudochromosome assembly that improves gene model continuity during annotation and enables comparative genomic analyses.</p>
 <p>The <code>-u</code> flag is critical — it retains all unplaced contigs in the output rather than discarding them, preserving any TW11-specific sequences absent from the reference strain. Gaps between joined contigs are represented as 100 N runs in the FASTA and as W/U records in the AGP file.</p>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -3005,7 +3009,7 @@ vertical-align: -.125em;
 </tr>
 </tbody>
 </table>
-<div id="8db7948e" class="cell" data-execution_count="19">
+<div id="074e16a8" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="va">REF</span><span class="op">=</span>00_downloads/reference/GCA_019097725.1/ncbi_dataset/data/<span class="dt">\</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>GCA_019097725.1/GCA_019097725.1_SYAU_Tha_1.0_genomic.fna</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="va">POLISHED</span><span class="op">=</span>08_polishing/longreads/nextpolish_work_r2/genome.nextpolish.fasta</span>
@@ -3034,7 +3038,7 @@ vertical-align: -.125em;
 <section id="tool-repeatmodeler2-de-novo-repeat-library-construction" class="level2" data-number="11.1">
 <h2 data-number="11.1" class="anchored" data-anchor-id="tool-repeatmodeler2-de-novo-repeat-library-construction"><span class="header-section-number">11.1</span> Tool: RepeatModeler2 — de novo repeat library construction</h2>
 <p><strong>Purpose:</strong> Build a species-specific repeat library from scratch by mining the assembly for repetitive sequences.</p>
-<p><strong>Rationale:</strong> Relying solely on generic Dfam repeat databases would miss <em>T. harzianum</em>-specific transposable elements, LTRs, and tandem repeats not represented in the database. RepeatModeler2 constructs a custom library directly from the assembly using RECON (graph-based repeat finding) and RepeatScout (frequency-based repeat finding), then classifies discovered families by homology to known repeats. This is particularly important for <em>Trichoderma</em>, which has undergone significant TE expansion and has a higher repeat content than many other fungi.</p>
+<p><strong>Functionality:</strong> Relying solely on generic Dfam repeat databases would miss <em>T. harzianum</em>-specific transposable elements, LTRs, and tandem repeats not represented in the database. RepeatModeler2 constructs a custom library directly from the assembly using RECON (graph-based repeat finding) and RepeatScout (frequency-based repeat finding), then classifies discovered families by homology to known repeats. This is particularly important for <em>Trichoderma</em>, which has undergone significant TE expansion and has a higher repeat content than many other fungi.</p>
 <p>The <code>-LTRStruct</code> flag activates an additional structural LTR retrotransposon discovery pipeline using LTR_Harvest and LTR_retriever, providing more comprehensive detection of full-length LTR elements than the sequence-based approach alone.</p>
 <p>The <code>-pa</code> flag sets the number of parallel jobs. Each RMBlast job uses 4 cores, so with 18 available cores: <code>18 ÷ 4 = 4</code> parallel jobs (using 16 cores). Passing more parallel jobs than core capacity over-subscribes the machine.</p>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -3050,7 +3054,7 @@ vertical-align: -.125em;
 <p>RepeatModeler2 on a ~39 Mb fungal genome typically runs for 12–24 hours with 4 parallel jobs. Run inside a <code>tmux</code> or <code>screen</code> session. If interrupted, recovery is possible with the <code>-recoverDir</code> flag pointing to the <code>RM_*/</code> working directory.</p>
 </div>
 </div>
-<div id="e3932f3b" class="cell" data-execution_count="20">
+<div id="199e22fd" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="va">SCAFFOLDED</span><span class="op">=</span>09_ragtag/scaffold/ragtag.scaffold.fasta</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> run <span class="at">-n</span> repeatmodeler BuildDatabase <span class="dt">\</span></span>
@@ -3075,7 +3079,7 @@ vertical-align: -.125em;
 <section id="tool-repeatmasker-soft-masking-the-assembly" class="level2" data-number="11.2">
 <h2 data-number="11.2" class="anchored" data-anchor-id="tool-repeatmasker-soft-masking-the-assembly"><span class="header-section-number">11.2</span> Tool: RepeatMasker — soft-masking the assembly</h2>
 <p><strong>Purpose:</strong> Identify all repeat instances in the assembly and convert them to lowercase (soft-masked) sequence.</p>
-<p><strong>Rationale:</strong> RepeatMasker is the standard tool for eukaryotic genome masking. <strong>Soft masking</strong> (<code>-xsmall</code>) is specifically required by BRAKER3 and Funannotate: it converts repeat bases to lowercase letters rather than replacing them with N, preserving the sequence for alignment tools while signalling to gene predictors to down-weight or avoid those regions. Hard masking (replacing with N) is not appropriate here as it fragments gene models near repeat boundaries.</p>
+<p><strong>Functionality:</strong> RepeatMasker is the standard tool for eukaryotic genome masking. <strong>Soft masking</strong> (<code>-xsmall</code>) is specifically required by BRAKER3 and Funannotate: it converts repeat bases to lowercase letters rather than replacing them with N, preserving the sequence for alignment tools while signalling to gene predictors to down-weight or avoid those regions. Hard masking (replacing with N) is not appropriate here as it fragments gene models near repeat boundaries.</p>
 <p>The custom RepeatModeler2 library is provided via <code>-lib</code> to ensure all strain-specific repeats are masked. RepeatMasker is run on the scaffolded assembly because masking must always be applied to the final sequence to be annotated. The <code>-gff</code> flag produces a repeat annotation track for downstream visualisation and analysis.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -3116,7 +3120,7 @@ vertical-align: -.125em;
 </tr>
 </tbody>
 </table>
-<div id="a0d55e22" class="cell" data-execution_count="21">
+<div id="fe832bfa" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="va">PROJECT_DIR</span><span class="op">=</span><span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="va">REPEAT_LIB</span><span class="op">=</span><span class="va">${PROJECT_DIR}</span>/10_repeat_masking/repeatmodeler/trichoderma_harzianum-families.fa</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="va">SCAFFOLDED</span><span class="op">=</span><span class="va">${PROJECT_DIR}</span>/09_ragtag/scaffold/ragtag.scaffold.fasta</span>
@@ -3139,6 +3143,88 @@ vertical-align: -.125em;
 <li><code>ragtag.scaffold.fasta.out</code> — full tab-delimited repeat hit table</li>
 </ul>
 <hr>
+</section>
+<section id="moving-all-results-to-a-folder" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="moving-all-results-to-a-folder"><span class="header-section-number">11.3</span> Moving all results to a folder</h2>
+<div id="0c789e6e" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="dt">\</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    results/qc/kraken <span class="dt">\</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    results/assembly/raw <span class="dt">\</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    results/assembly/polished <span class="dt">\</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    results/scaffolding <span class="dt">\</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    results/repeat_masking</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co"># QC</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> 01_qc_raw/multiqc_report/multiqc_report.html <span class="dt">\</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>   results/qc/multiqc_raw.html</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> 03_qc_filtered/multiqc_report/multiqc_report.html <span class="dt">\</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>   results/qc/multiqc_filtered.html</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a><span class="co"># KRAKEN</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> 04_contaminants <span class="at">-type</span> f <span class="dt">\(</span> <span class="dt">\</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">-name</span> <span class="st">&quot;*report*&quot;</span> <span class="at">-o</span> <span class="dt">\</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">-name</span> <span class="st">&quot;*report.txt&quot;</span> <span class="at">-o</span> <span class="dt">\</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">-name</span> <span class="st">&quot;*kraken*.report&quot;</span> <span class="dt">\</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a><span class="dt">\)</span> <span class="at">-exec</span> cp {} results/qc/kraken/ <span class="dt">\;</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a><span class="co">#Raw Assemblies</span></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/raw_assembly/busco/flye/short_summary.specific.hypocreaceae_odb12.flye.txt <span class="dt">\</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>results/assembly/raw/</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/raw_assembly/busco/raven/short_summary.specific.hypocreaceae_odb12.raven.txt <span class="dt">\</span></span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>results/assembly/raw/</span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/raw_assembly/busco/wtdbg2/short_summary.specific.hypocreaceae_odb12.wtdbg2.txt <span class="dt">\</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>results/assembly/raw/</span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/raw_assembly/quast/flye/report.tsv <span class="dt">\</span></span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>results/assembly/raw/flye_quast.tsv</span>
+<span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/raw_assembly/quast/raven/report.tsv <span class="dt">\</span></span>
+<span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a>results/assembly/raw/raven_quast.tsv</span>
+<span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-43"><a href="#cb24-43" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-44"><a href="#cb24-44" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/raw_assembly/quast/wtdbg2/report.tsv <span class="dt">\</span></span>
+<span id="cb24-45"><a href="#cb24-45" aria-hidden="true" tabindex="-1"></a>results/assembly/raw/wtdbg2_quast.tsv</span>
+<span id="cb24-46"><a href="#cb24-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-47"><a href="#cb24-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Polished Assemblies</span></span>
+<span id="cb24-48"><a href="#cb24-48" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-49"><a href="#cb24-49" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/polished_assembly/busco/short_summary.specific.hypocreaceae_odb12.busco.txt <span class="dt">\</span></span>
+<span id="cb24-50"><a href="#cb24-50" aria-hidden="true" tabindex="-1"></a>results/assembly/polished/busco.txt</span>
+<span id="cb24-51"><a href="#cb24-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-52"><a href="#cb24-52" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-53"><a href="#cb24-53" aria-hidden="true" tabindex="-1"></a>07_assembly_evaluation/polished_assembly/quast_reference/report.tsv <span class="dt">\</span></span>
+<span id="cb24-54"><a href="#cb24-54" aria-hidden="true" tabindex="-1"></a>results/assembly/polished/quast.tsv</span>
+<span id="cb24-55"><a href="#cb24-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-56"><a href="#cb24-56" aria-hidden="true" tabindex="-1"></a><span class="co">#Merqury</span></span>
+<span id="cb24-57"><a href="#cb24-57" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> 07_assembly_evaluation/polished_assembly/merqury <span class="dt">\</span></span>
+<span id="cb24-58"><a href="#cb24-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">-type</span> f <span class="dt">\</span></span>
+<span id="cb24-59"><a href="#cb24-59" aria-hidden="true" tabindex="-1"></a>    <span class="dt">\(</span> <span class="at">-name</span> <span class="st">&quot;*.qv&quot;</span> <span class="at">-o</span> <span class="at">-name</span> <span class="st">&quot;*qv.txt&quot;</span> <span class="dt">\)</span> <span class="dt">\</span></span>
+<span id="cb24-60"><a href="#cb24-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">-exec</span> cp {} results/assembly/polished/ <span class="dt">\;</span></span>
+<span id="cb24-61"><a href="#cb24-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-62"><a href="#cb24-62" aria-hidden="true" tabindex="-1"></a><span class="co"># RagTag</span></span>
+<span id="cb24-63"><a href="#cb24-63" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-64"><a href="#cb24-64" aria-hidden="true" tabindex="-1"></a>09_ragtag/scaffold/ragtag.scaffold.stats <span class="dt">\</span></span>
+<span id="cb24-65"><a href="#cb24-65" aria-hidden="true" tabindex="-1"></a>results/scaffolding/</span>
+<span id="cb24-66"><a href="#cb24-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-67"><a href="#cb24-67" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-68"><a href="#cb24-68" aria-hidden="true" tabindex="-1"></a>09_ragtag/evaluation/busco/short_summary.specific.hypocreaceae_odb12.busco.txt <span class="dt">\</span></span>
+<span id="cb24-69"><a href="#cb24-69" aria-hidden="true" tabindex="-1"></a>results/scaffolding/ragtag_busco.txt</span>
+<span id="cb24-70"><a href="#cb24-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-71"><a href="#cb24-71" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> <span class="dt">\</span></span>
+<span id="cb24-72"><a href="#cb24-72" aria-hidden="true" tabindex="-1"></a>09_ragtag/evaluation/quast/report.tsv <span class="dt">\</span></span>
+<span id="cb24-73"><a href="#cb24-73" aria-hidden="true" tabindex="-1"></a>results/scaffolding/ragtag_quast.tsv</span>
+<span id="cb24-74"><a href="#cb24-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-75"><a href="#cb24-75" aria-hidden="true" tabindex="-1"></a><span class="co"># RepeatMasking</span></span>
+<span id="cb24-76"><a href="#cb24-76" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> 10_repeat_masking <span class="at">-type</span> f <span class="at">-name</span> <span class="st">&quot;*.tbl&quot;</span> <span class="dt">\</span></span>
+<span id="cb24-77"><a href="#cb24-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">-exec</span> cp {} results/repeat_masking/ <span class="dt">\;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
 </section>
 <section id="summary-and-next-steps" class="level1" data-number="12">
