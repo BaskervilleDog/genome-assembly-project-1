@@ -1,0 +1,23 @@
+Assembly	wtdbg2_assembly
+# contigs (>= 0 bp)	129
+# contigs (>= 1000 bp)	129
+# contigs (>= 5000 bp)	126
+# contigs (>= 10000 bp)	105
+# contigs (>= 25000 bp)	78
+# contigs (>= 50000 bp)	71
+Total length (>= 0 bp)	38302188
+Total length (>= 1000 bp)	38302188
+Total length (>= 5000 bp)	38287566
+Total length (>= 10000 bp)	38131975
+Total length (>= 25000 bp)	37685725
+Total length (>= 50000 bp)	37463287
+# contigs	129
+Largest contig	2973539
+Total length	38302188
+GC (%)	49.36
+N50	699829
+N90	225599
+auN	1034976.8
+L50	15
+L90	48
+# N's per 100 kbp	0.00

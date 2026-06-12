@@ -724,6 +724,88 @@ mamba run -n repeatmodeler RepeatMasker \
 
 ---
 
+## Moving all results to a folder
+
+```{bash}
+mkdir -p \
+    results/qc/kraken \
+    results/assembly/raw \
+    results/assembly/polished \
+    results/scaffolding \
+    results/repeat_masking
+
+# QC
+cp 01_qc_raw/multiqc_report/multiqc_report.html \
+   results/qc/multiqc_raw.html
+
+cp 03_qc_filtered/multiqc_report/multiqc_report.html \
+   results/qc/multiqc_filtered.html
+
+# KRAKEN
+find 04_contaminants -type f \( \
+    -name "*report*" -o \
+    -name "*report.txt" -o \
+    -name "*kraken*.report" \
+\) -exec cp {} results/qc/kraken/ \;
+
+#Raw Assemblies
+cp \
+07_assembly_evaluation/raw_assembly/busco/flye/short_summary.specific.hypocreaceae_odb12.flye.txt \
+results/assembly/raw/
+
+cp \
+07_assembly_evaluation/raw_assembly/busco/raven/short_summary.specific.hypocreaceae_odb12.raven.txt \
+results/assembly/raw/
+
+cp \
+07_assembly_evaluation/raw_assembly/busco/wtdbg2/short_summary.specific.hypocreaceae_odb12.wtdbg2.txt \
+results/assembly/raw/
+
+cp \
+07_assembly_evaluation/raw_assembly/quast/flye/report.tsv \
+results/assembly/raw/flye_quast.tsv
+
+cp \
+07_assembly_evaluation/raw_assembly/quast/raven/report.tsv \
+results/assembly/raw/raven_quast.tsv
+
+cp \
+07_assembly_evaluation/raw_assembly/quast/wtdbg2/report.tsv \
+results/assembly/raw/wtdbg2_quast.tsv
+
+# Polished Assemblies
+cp \
+07_assembly_evaluation/polished_assembly/busco/short_summary.specific.hypocreaceae_odb12.busco.txt \
+results/assembly/polished/busco.txt
+
+cp \
+07_assembly_evaluation/polished_assembly/quast_reference/report.tsv \
+results/assembly/polished/quast.tsv
+
+#Merqury
+find 07_assembly_evaluation/polished_assembly/merqury \
+    -type f \
+    \( -name "*.qv" -o -name "*qv.txt" \) \
+    -exec cp {} results/assembly/polished/ \;
+
+# RagTag
+cp \
+09_ragtag/scaffold/ragtag.scaffold.stats \
+results/scaffolding/
+
+cp \
+09_ragtag/evaluation/busco/short_summary.specific.hypocreaceae_odb12.busco.txt \
+results/scaffolding/ragtag_busco.txt
+
+cp \
+09_ragtag/evaluation/quast/report.tsv \
+results/scaffolding/ragtag_quast.tsv
+
+# RepeatMasking
+find 10_repeat_masking -type f -name "*.tbl" \
+    -exec cp {} results/repeat_masking/ \;
+```
+
 # Summary and Next Steps
 
 ## Pipeline summary

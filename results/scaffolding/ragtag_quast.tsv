@@ -1,0 +1,55 @@
+Assembly	ragtag.scaffold
+# contigs (>= 0 bp)	17
+# contigs (>= 1000 bp)	17
+# contigs (>= 5000 bp)	17
+# contigs (>= 10000 bp)	14
+# contigs (>= 25000 bp)	12
+# contigs (>= 50000 bp)	10
+Total length (>= 0 bp)	38958665
+Total length (>= 1000 bp)	38958665
+Total length (>= 5000 bp)	38958665
+Total length (>= 10000 bp)	38935362
+Total length (>= 25000 bp)	38899095
+Total length (>= 50000 bp)	38831875
+# contigs	17
+Largest contig	7473729
+Total length	38958665
+Reference length	40003050
+GC (%)	48.84
+Reference GC (%)	48.44
+N50	6662274
+NG50	6662274
+N90	4018016
+NG90	4018016
+auN	5805549.3
+auNG	5653980.1
+L50	3
+LG50	3
+L90	7
+LG90	7
+# misassemblies	2
+# misassembled contigs	1
+Misassembled contigs length	57462
+# local misassemblies	2
+# scaffold gap ext. mis.	0
+# scaffold gap loc. mis.	0
+# unaligned mis. contigs	7
+# unaligned contigs	2 + 14 part
+Unaligned length	35837935
+Genome fraction (%)	7.693
+Duplication ratio	1.012
+# N's per 100 kbp	13.60
+# mismatches per 100 kbp	3410.74
+# indels per 100 kbp	508.80
+Largest alignment	52508
+Total aligned length	3115397
+NA50	-
+NGA50	-
+NA90	-
+NGA90	-
+auNA	992.1
+auNGA	966.2
+LA50	-
+LGA50	-
+LA90	-
+LGA90	-

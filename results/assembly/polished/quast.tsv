@@ -1,0 +1,55 @@
+Assembly	genome.nextpolish
+# contigs (>= 0 bp)	70
+# contigs (>= 1000 bp)	70
+# contigs (>= 5000 bp)	70
+# contigs (>= 10000 bp)	67
+# contigs (>= 25000 bp)	64
+# contigs (>= 50000 bp)	54
+Total length (>= 0 bp)	38953365
+Total length (>= 1000 bp)	38953365
+Total length (>= 5000 bp)	38953365
+Total length (>= 10000 bp)	38930062
+Total length (>= 25000 bp)	38871702
+Total length (>= 50000 bp)	38540887
+# contigs	70
+Largest contig	3018388
+Total length	38953365
+Reference length	40003050
+GC (%)	48.84
+Reference GC (%)	48.44
+N50	1632210
+NG50	1195554
+N90	344994
+NG90	241702
+auN	1513295.9
+auNG	1473586.8
+L50	9
+LG50	10
+L90	29
+LG90	33
+# misassemblies	2
+# misassembled contigs	1
+Misassembled contigs length	57462
+# local misassemblies	2
+# scaffold gap ext. mis.	0
+# scaffold gap loc. mis.	0
+# unaligned mis. contigs	39
+# unaligned contigs	10 + 59 part
+Unaligned length	35837484
+Genome fraction (%)	7.694
+Duplication ratio	1.012
+# N's per 100 kbp	0.00
+# mismatches per 100 kbp	3410.63
+# indels per 100 kbp	508.91
+Largest alignment	52508
+Total aligned length	3115848
+NA50	-
+NGA50	-
+NA90	-
+NGA90	-
+auNA	992.3
+auNGA	966.2
+LA50	-
+LGA50	-
+LA90	-
+LGA90	-

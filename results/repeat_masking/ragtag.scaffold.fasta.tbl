@@ -1,0 +1,51 @@
+==================================================
+file name: ragtag.scaffold.fasta    
+sequences:            17
+total length:   38958665 bp  (38953365 bp excl N/X-runs)
+GC level:         48.84 %
+bases masked:    1478659 bp ( 3.80 %)
+==================================================
+               number of      length   percentage
+               elements*    occupied  of sequence
+--------------------------------------------------
+SINEs:                0            0 bp    0.00 %
+      ALUs            0            0 bp    0.00 %
+      MIRs            0            0 bp    0.00 %
+
+LINEs:                0            0 bp    0.00 %
+      LINE1           0            0 bp    0.00 %
+      LINE2           0            0 bp    0.00 %
+      L3/CR1          0            0 bp    0.00 %
+
+LTR elements:       303       631936 bp    1.62 %
+      ERVL            0            0 bp    0.00 %
+      ERVL-MaLRs      0            0 bp    0.00 %
+      ERV_classI      0            0 bp    0.00 %
+      ERV_classII     0            0 bp    0.00 %
+
+DNA elements:         0            0 bp    0.00 %
+     hAT-Charlie      0            0 bp    0.00 %
+     TcMar-Tigger     0            0 bp    0.00 %
+
+Unclassified:      1521       347735 bp    0.89 %
+
+Total interspersed repeats:   979671 bp    2.51 %
+
+
+Small RNA:            0            0 bp    0.00 %
+
+Satellites:           0            0 bp    0.00 %
+Simple repeats:   10376       419011 bp    1.08 %
+Low complexity:    1631        84737 bp    0.22 %
+==================================================
+
+* most repeats fragmented by insertions or deletions
+  have been counted as one element
+                                                      
+
+The query species was assumed to be homo          
+RepeatMasker version open-4.0.6 , default mode
+                                   
+run with rmblastn version 2.14.1+
+The query was compared to classified sequences in ".../trichoderma_harzianum-families.fa"
+RepBase Update 20110419-min, RM database version 20110419-min

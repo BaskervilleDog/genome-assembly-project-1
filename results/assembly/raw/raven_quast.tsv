@@ -1,0 +1,23 @@
+Assembly	raven_assembly
+# contigs (>= 0 bp)	85
+# contigs (>= 1000 bp)	85
+# contigs (>= 5000 bp)	84
+# contigs (>= 10000 bp)	84
+# contigs (>= 25000 bp)	75
+# contigs (>= 50000 bp)	63
+Total length (>= 0 bp)	38519873
+Total length (>= 1000 bp)	38519873
+Total length (>= 5000 bp)	38517441
+Total length (>= 10000 bp)	38517441
+Total length (>= 25000 bp)	38338386
+Total length (>= 50000 bp)	37901582
+# contigs	85
+Largest contig	2814495
+Total length	38519873
+GC (%)	49.09
+N50	865285
+N90	248764
+auN	1220214.3
+L50	12
+L90	38
+# N's per 100 kbp	0.00

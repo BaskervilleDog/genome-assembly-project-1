@@ -1,0 +1,30 @@
+# BUSCO version is: 6.0.0 
+# The lineage dataset is: hypocreaceae_odb12 (Creation date: 2026-05-22, number of genomes: 6, number of BUSCOs: 4323)
+# Summarized benchmarking in BUSCO notation for file /home/gianlucca/genome-assembly-project-1/06_assemblies/raven/raven_assembly.fasta
+# BUSCO was run in mode: euk_genome_min
+# Gene predictor used: miniprot
+
+	***** Results: *****
+
+	C:99.8%[S:99.6%,D:0.2%],F:0.1%,M:0.1%,n:4323,E:1.6%	   
+	4315	Complete BUSCOs (C)	(of which 71 contain internal stop codons)		   
+	4306	Complete and single-copy BUSCOs (S)	   
+	9	Complete and duplicated BUSCOs (D)	   
+	3	Fragmented BUSCOs (F)			   
+	5	Missing BUSCOs (M)			   
+	4323	Total BUSCO groups searched		   
+
+Assembly Statistics:
+	85	Number of scaffolds
+	85	Number of contigs
+	38519873	Total length
+	0.000%	Percent gaps
+	865 kbp	Scaffold N50
+	865 kbp	Contigs N50
+
+
+Dependencies and versions:
+	hmmsearch: 3.4
+	bbtools: None
+	miniprot_index: 0.18-r281
+	miniprot_align: 0.18-r281
