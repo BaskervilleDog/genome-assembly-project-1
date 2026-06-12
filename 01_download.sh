@@ -13,7 +13,7 @@
 # mamba | seqfetcher
 #==============================================================================
 
-set -euo pipefail
+#set -euo pipefail
 
 #==============================================================================
 # CONFIGURATION
@@ -54,7 +54,7 @@ echo "========== STEP 1.1: DOWNLOADING SRA DATA =========="
 printf "%s\n" "${ACCESSIONS[@]}" > accession_list.txt
 
 mamba run -n ncbi_tools seqfetcher download \
-    --sra-method ena \
+    --sra-method parallel \
     --sra-accession-file accession_list.txt
 
 cd "${BASE_DIR}"

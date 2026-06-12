@@ -1,0 +1,767 @@
+---
+title: "Genome Assembly Pipeline — *Trichoderma harzianum* TW11"
+subtitle: "Tool and methodology for a hybrid PacBio + Illumina assembly"
+author: "Gianlucca de Urzeda Alves"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    toc-title: "Pipeline stages"
+    number-sections: true
+    code-fold: false
+    theme: cosmo
+    highlight-style: github
+    embed-resources: true
+    smooth-scroll: true
+    grid:
+      body-width: 900px
+  pdf:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    colorlinks: true
+    geometry:
+      - top=25mm
+      - bottom=25mm
+      - left=25mm
+      - right=25mm
+execute:
+  eval: false
+  echo: true
+---
+
+# Overview
+
+This document describes the complete hybrid genome assembly pipeline for *Trichoderma harzianum* TW11, from raw sequencing data to a soft-masked, scaffolded assembly ready for structural gene annotation. For each step, the tool selected is described and key parameters are justified.
+
+**Sequencing data source:** NCBI SRA — BioProject [PRJNA596042](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA596042)
+
+| Run Accession | Technology | Description | Total Bases | Coverage (40 Mb) |
+|---|---|---|---|---|
+| SRR10848482 | PacBio RS2/Sequel | Long reads | 7.1 Gb | **178×** |
+| SRR10848483 | Illumina HiSeq 4000 | Short reads (run 1) | 1.5 Gb | **38×** |
+| SRR10848484 | Illumina HiSeq 4000 | Short reads (run 2) | 0.95 Gb | **23×** |
+
+: Sequencing libraries used in this project {.striped}
+
+**Final assembly statistics:**
+
+| Metric | Value |
+|---|---|
+| Total length | 38.95 Mb |
+| Number of contigs | 70 |
+| Number of scaffolds | 17 |
+| Scaffold N50 | 1 Mbp |
+| Gap content | 0.000% |
+| BUSCO completeness | 99.8% (hypocreaceae_odb12) |
+| Merqury QV | 34.4 |
+
+: Final polished and scaffolded assembly metrics {.striped}
+
+---
+
+# Project Directory Structure
+
+Each processing stage has its own numbered directory, keeping raw data, intermediate files, QC reports, and logs clearly separated and in pipeline order.
+
+```
+project/
+├── 00_downloads/           # Raw FASTQ files from SRA
+├── 01_qc_raw/              # SeqKit stats, LongReadSum, FastQC, MultiQC on raw reads
+├── 02_filtered/
+│   ├── pacbio/             # fastplong-filtered long reads
+│   └── illumina/           # fastp-filtered short reads
+├── 03_qc_filtered/         # SeqKit stats, FastQC, MultiQC on filtered reads
+├── 04_contaminants/        # Kraken2 classification reports and classified reads
+├── 05_decontaminated/      # Unclassified (host-free) reads
+├── 06_assemblies/          # Raw assembler outputs (flye, raven, wtdbg2)
+├── 07_assembly_evaluation/
+│   ├── raw_assembly/       # BUSCO, QUAST, Merqury on pre-polishing assemblies
+│   └── polished_assembly/  # BUSCO, QUAST, Merqury on final assembly
+├── 08_polishing/
+│   └── longreads/          # PAF alignments, Racon rounds, Polypolish SAMs, NextPolish
+├── 09_ragtag/              # RagTag scaffold output and evaluation
+├── 10_repeat_masking/
+│   ├── repeatmodeler/      # De novo repeat library
+│   └── repeatmasker/       # Soft-masked assembly
+└── logs/                   # All stdout/stderr logs
+```
+
+---
+
+# Data Download
+
+## Tool: SeqFetcher
+
+**Purpose:** Download raw FASTQ files from NCBI SRA for three accessions (PacBio and Illumina).
+
+**Functionality:** SeqFetcher wraps the underlying NCBI tools — `fasterq-dump`, `datasets`, and related utilities such as SRA Toolkit — into a single command that handles multiple accessions simultaneously. For a project with three distinct sequencing runs, this reduces setup time and ensures consistent file naming.
+
+```{bash}
+cat > accession_list.txt << EOF
+SRR10848482
+SRR10848483
+SRR10848484
+EOF
+
+mamba run -n ncbi_tools seqfetcher download \
+    --sra-method parallel \
+    --sra-accession-file accession_list.txt
+
+mv ./seqfetcher/downloads/fastq/*.gz ./00_downloads/
+```
+
+---
+
+# Quality Control — Raw Reads
+
+Quality control is performed before filtering to establish baseline metrics. Tool selection differs by sequencing technology.
+
+## Tool: SeqKit stats — basic read statistics
+
+**Purpose:** Fast per-file statistics for both PacBio and Illumina libraries.
+
+**Functionality:** SeqKit is a fast and available tool for per-file summary statistics and handles FASTQ and FASTA, compressed or uncompressed, without format-specific configuration. It is used here as a lightweight sanity check before running heavier QC tools, and again post-filtering to confirm yield changes. The `-a` flag enables all extended metrics including N50 and Q-score statistics.
+
+::: {.callout-note}
+## PacBio quality scores
+SeqKit will report Q=0 for PacBio reads downloaded from SRA. Quality scores were stripped or replaced with placeholders during the SRA download process. The reads are valid; quality-based filtering is not applied to long reads as a result (see Section 5.1).
+:::
+
+```{bash}
+# Long reads
+mamba run -n seqkit seqkit \
+    stats -a 00_downloads/SRR10848482_1.fastq.gz \
+    > 01_qc_raw/SRR10848482_1_raw_stats.txt
+
+# Short reads
+for srr in SRR10848483 SRR10848484; do
+    for read in 1 2; do
+        mamba run -n seqkit seqkit \
+            stats -a 00_downloads/${srr}_${read}.fastq.gz \
+            > 01_qc_raw/${srr}_${read}_raw_stats.txt
+    done
+done
+```
+
+## Tool: LongReadSum — PacBio read-length profiling
+
+**Purpose:** Visual read-length distributions and summary HTML reports for PacBio data.
+
+**Functionality:** For PacBio data where quality scores are absent, read-length distribution is the primary QC metric. LongReadSum provides read-length histograms and N50 distribution plots that FastQC cannot produce meaningfully for long reads. It is used to confirm that the PacBio library contains adequate long reads (>5 kb) to support contiguous assembly and to visualise the read-length profile.
+
+```{bash}
+mamba run -n longreadsum longreadsum \
+    fq -i 00_downloads/SRR10848482_1.fastq.gz \
+    -o 01_qc_raw/ \
+    > logs/longreadsum_raw.stdout.log \
+    2> logs/longreadsum_raw.stderr.log
+```
+
+## Tool: FastQC — Illumina per-base quality profiling
+
+**Purpose:** Per-base quality score distributions, GC content, and adapter detection for Illumina reads.
+
+**Functionality:** FastQC is the standard first-pass QC tool for Illumina data and is required to identify adapter contamination, base quality drop-offs toward read 3' ends, and per-tile quality issues. Its HTML reports are also directly consumed by MultiQC for cross-sample aggregation. Applied to all four Illumina FASTQ files in a single command.
+
+```{bash}
+mamba run -n fastqc fastqc \
+    -t 18 \
+    -o 01_qc_raw/ \
+    00_downloads/SRR10848483_1.fastq.gz \
+    00_downloads/SRR10848483_2.fastq.gz \
+    00_downloads/SRR10848484_1.fastq.gz \
+    00_downloads/SRR10848484_2.fastq.gz \
+    > logs/fastqc_raw.stdout.log \
+    2> logs/fastqc_raw.stderr.log
+```
+
+## Tool: MultiQC — aggregate QC report
+
+**Purpose:** Merge all FastQC, fastp, and other tool outputs into a single interactive HTML report.
+
+**Functionality:** With four Illumina FASTQ files across two runs, comparing quality metrics file-by-file is error-prone. MultiQC aggregates all FastQC reports into a single interactive report where adapter content, quality score distributions, and duplication rates are visible across all samples simultaneously, making cross-run batch effects immediately apparent. It is run both pre- and post-filtering to confirm the effect.
+
+```{bash}
+mamba run -n multiqc multiqc \
+    01_qc_raw/ \
+    -o 01_qc_raw/multiqc_report
+```
+
+---
+
+# Read Filtering
+
+Filtering removes low-quality bases, adapter sequences, and reads too short to be informative for assembly. Tool selection differs by sequencing technology.
+
+## Tool: fastplong — PacBio long-read filtering
+
+**Purpose:** Length-based filtering of PacBio reads. Quality filtering is disabled due to absent quality scores.
+
+**Functionality:** Standard short-read trimming tools (fastp, Trimmomatic) are not appropriate for long reads — they do not handle the variable-length profile of PacBio reads or their distinct error characteristics. fastplong is a long-read-aware tool. Here, quality filtering is explicitly disabled (`-Q`) because quality scores are absent in this SRA dataset. Only length filtering is applied to remove reads shorter than 1 kb, which are too short to contribute meaningfully to assembly contiguity and may introduce false overlaps.
+
+| Parameter | Value | Justification |
+|---|---|---|
+| `-Q` | — | Disable quality filtering (scores absent) |
+| `--length_required` | 1000 bp | Remove reads too short for assembly |
+| `-w` | 18 | Worker threads |
+
+```{bash}
+mamba run -n fastplong fastplong \
+    -w 18 \
+    -Q \
+    --length_required 1000 \
+    -i 00_downloads/SRR10848482_1.fastq.gz \
+    -o 02_filtered/pacbio/SRR10848482_1_filtered.fastq.gz \
+    --html 03_qc_filtered/SRR10848482_1.fastplong.html \
+    --json 03_qc_filtered/SRR10848482_1.fastplong.json \
+    > logs/SRR10848482_1.fastplong.stdout.log \
+    2> logs/SRR10848482_1.fastplong.stderr.log
+```
+
+## Tool: fastp — Illumina adapter trimming and quality filtering
+
+**Purpose:** Adapter removal, quality filtering, and per-read error correction for Illumina paired-end reads.
+
+**Functionality:** fastp combines adapter trimming, quality filtering, and read-level error correction into a single fast pass, replacing what previously required separate tools (Trimmomatic for trimming, FastQC for reporting). Key advantages over Trimmomatic include: automatic adapter detection (avoiding hardcoding sequences), overlap-based error correction (`--correction`) that uses read-pair overlaps to correct sequencing errors before assembly, and built-in HTML/JSON reporting compatible with MultiQC. A minimum quality of Q30 and minimum length of 150 bp were applied to ensure only high-confidence reads feed into short-read polishing.
+
+| Parameter | Value | Justification |
+|---|---|---|
+| `--detect_adapter_for_pe` | — | Auto-detect PE adapter sequences |
+| `--qualified_quality_phred` | 30 | Minimum base quality Q30 |
+| `--length_required` | 150 bp | Minimum read length |
+| `--correction` | — | Overlap-based error correction |
+
+```{bash}
+for srr in SRR10848483 SRR10848484; do
+    mamba run -n fastp fastp \
+        -w 18 \
+        --detect_adapter_for_pe \
+        --qualified_quality_phred 30 \
+        --length_required 150 \
+        --correction \
+        -i 00_downloads/${srr}_1.fastq.gz \
+        -I 00_downloads/${srr}_2.fastq.gz \
+        -o 02_filtered/illumina/${srr}_1_filtered.fastq.gz \
+        -O 02_filtered/illumina/${srr}_2_filtered.fastq.gz \
+        --html 03_qc_filtered/${srr}.fastp.html \
+        --json 03_qc_filtered/${srr}.fastp.json \
+        > logs/${srr}.fastp.stdout.log \
+        2> logs/${srr}.fastp.stderr.log
+done
+```
+
+---
+
+# Decontamination
+
+## Tool: Kraken2 — taxonomic read classification
+
+**Purpose:** Classify reads against a reference database to identify and remove non-target organism reads before assembly.
+
+**Functionality:** Fungal cultures, especially soil-derived organisms like *T. harzianum*, frequently carry bacterial and human DNA contamination from culture media, researcher handling, or sequencing reagents. Assembling without decontamination causes chimeric contigs, inflates genome size estimates, and introduces false gene predictions in annotation. Kraken2 uses exact k-mer matching against a reference database and is fast enough to process hundreds of millions of reads in under an hour while maintaining high sensitivity. Reads marked as **unclassified** — those not matching any known organism — are retained as the clean dataset for all downstream assembly steps. Classified (contaminant) reads are saved separately for inspection. Kraken standard database (16Gb) is used, which includes bacterial, archaeal, viral, and human sequences, providinga basic coverage of common contaminants.
+
+```{bash}
+# PacBio long reads
+mamba run -n kraken2 kraken2 \
+    --db ~/databases/kraken2_db \
+    --threads 16 \
+    --report 04_contaminants/pacbio_report.k2report \
+    --unclassified-out 05_decontaminated/SRR10848482_unclassified.fastq \
+    --classified-out 04_contaminants/SRR10848482_classified.fastq \
+    02_filtered/pacbio/SRR10848482_1_filtered.fastq.gz \
+    > 04_contaminants/pacbio_output.kraken2 \
+    2> logs/kraken2_pacbio.stderr.log
+
+# Illumina paired-end reads (both runs)
+for srr in SRR10848483 SRR10848484; do
+    mamba run -n kraken2 kraken2 \
+        --db ~/databases/kraken2_db \
+        --threads 16 \
+        --paired \
+        --report 04_contaminants/${srr}_report.k2report \
+        --unclassified-out 05_decontaminated/${srr}_unclassified#.fastq \
+        --classified-out 04_contaminants/${srr}_classified#.fastq \
+        02_filtered/illumina/${srr}_1_filtered.fastq.gz \
+        02_filtered/illumina/${srr}_2_filtered.fastq.gz \
+        > 04_contaminants/${srr}_output.kraken2 \
+        2> logs/kraken2_${srr}.stderr.log
+done
+
+pigz -p 16 05_decontaminated/*.fastq
+```
+
+---
+
+# Genome Assembly
+
+Three independent assemblers are run on the same decontaminated PacBio long reads. BUSCO and QUAST are applied to all three outputs before selecting the best assembly for polishing.
+
+::: {.callout-tip}
+## Why run three assemblers?
+Running multiple assemblers with different algorithmic approaches is a best practice for de novo assembly. Each assembler uses different graph construction heuristics, overlap detection strategies, and repeat handling, meaning they produce different assemblies from identical input. Empirical evaluation with BUSCO and QUAST,rather than theoretical assumptions, determines which assembler performed best on this particular genome and coverage depth.
+:::
+
+## Tool: Flye — primary long-read assembler
+
+**Purpose:** De novo assembly from PacBio long reads using a repeat-aware graph approach.
+
+**Functionality:** Flye was selected as the primary assembler because it performs consistently well on fungal genomes with significant repeat content and is specifically designed for the coverage levels generated here (~178× PacBio). Its repeat graph explicitly models repetitive sequences during assembly, helping to resolve the transposable elements and tandem repeats common in *Trichoderma*. The `--pacbio-corr` mode indicates the input reads have been corrected, adjusting internal error-tolerance parameters. Flye was ultimately selected for polishing based on comparative BUSCO/QUAST results.
+
+```{bash}
+mamba run -n flye292 flye \
+    --pacbio-corr 05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    --genome-size 40m \
+    --out-dir 06_assemblies/flye \
+    --threads 16 \
+    > logs/SRR10848482_flye.stdout.log \
+    2> logs/SRR10848482_flye.stderr.log
+```
+
+## Tool: Raven — fast de novo assembler
+
+**Purpose:** Fast assembly comparison using a Raven graph with internal polishing.
+
+**Functionality:** Raven uses an alternative string-graph approach and incorporates one round of Racon polishing internally as part of its assembly pipeline. It is notably faster and more memory-efficient than Flye, making it practical to run alongside slower assemblers. Raven often produces high contiguity on fungal genomes, providing a valuable benchmark for comparison.
+
+```{bash}
+mamba run -n raven raven \
+    --threads 16 \
+    05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    > 06_assemblies/raven/raven_assembly.fasta \
+    2> logs/SRR10848482_raven.stderr.log
+```
+
+## Tool: wtdbg2 — fuzzy de Bruijn graph assembler
+
+**Purpose:** Additional assembly comparison using a structurally different graph approach.
+
+**Functionality:** wtdbg2 uses a fuzzy de Bruijn graph rather than an overlap graph or repeat graph, providing a structurally different algorithmic approach compared to Flye and Raven. This increases the probability of identifying the best assembly through empirical evaluation. Consensus generation is run separately via `wtpoa-cns` after graph construction. The `-x rs` preset configures error-tolerance parameters for PacBio RS/Sequel reads.
+
+```{bash}
+mamba run -n wtdbg2 wtdbg2 \
+    -x rs -g 40m -t 16 \
+    -i 05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    -fo 06_assemblies/wtdbg2/wtdbg2 \
+    > logs/SRR10848482_wtdbg2.stdout.log \
+    2> logs/SRR10848482_wtdbg2.stderr.log
+
+mamba run -n wtdbg2 wtpoa-cns \
+    -t 16 \
+    -i 06_assemblies/wtdbg2/wtdbg2.ctg.lay.gz \
+    -fo 06_assemblies/wtdbg2/wtdbg2_assembly.fasta \
+    >> logs/SRR10848482_wtdbg2.stdout.log \
+    2>> logs/SRR10848482_wtdbg2.stderr.log
+```
+
+---
+
+# Assembly Polishing
+
+Long-read assemblers produce structurally accurate contigs but with residual indel and substitution errors. The polishing strategy corrects these through a sequential pipeline: long-read correction first (Racon × 2), followed by short-read correction (Polypolish then NextPolish), progressing from structural to base-level accuracy.
+
+## Tool: minimap2 — read-to-assembly alignment
+
+**Purpose:** Align PacBio long reads back to the assembly, producing PAF format alignments for Racon.
+
+**Functionality:** minimap2 is the standard aligner for long-read-to-assembly mapping and has largely superseded older PacBio-specific aligners (BLASR, NGMLR) for polishing workflows. The `-x map-pb` preset is calibrated for PacBio CLR reads with appropriate gap penalty parameters for the PacBio error profile. Applied before each Racon round with the updated assembly as reference each time.
+
+```{bash}
+mamba run -n minimap2 minimap2 \
+    -t 18 -x map-pb \
+    06_assemblies/flye/assembly.fasta \
+    05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    > 08_polishing/longreads/pacbio_flye_alignments_r1.paf \
+    2> logs/minimap2_racon_r1.stderr.log
+```
+
+## Tool: Racon — long-read consensus polishing (2 rounds)
+
+**Purpose:** Correct assembly errors using long-read alignment consensus. Applied for two consecutive rounds.
+
+**Functionality:** Racon performs consensus-based polishing by voting across all reads aligned to each position, correcting indels and substitutions introduced during assembly. Two rounds are applied: the first round corrects the largest errors; the second catches residual errors in regions with poor alignment coverage in round 1. A third round yields diminishing returns and is not applied. Long-read polishing precedes short-read polishing because it corrects structural errors that would otherwise confuse short-read alignments.
+
+```{bash}
+# Round 1
+mamba run -n racon1420 racon \
+    -t 18 \
+    05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    08_polishing/longreads/pacbio_flye_alignments_r1.paf \
+    06_assemblies/flye/assembly.fasta \
+    > 08_polishing/longreads/pacbio_flye_assembly.racon1.fasta \
+    2> logs/racon_r1.stderr.log
+
+# Round 2 (map to round 1 output, then polish)
+mamba run -n minimap2 minimap2 \
+    -t 18 -x map-pb \
+    08_polishing/longreads/pacbio_flye_assembly.racon1.fasta \
+    05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    > 08_polishing/longreads/pacbio_flye_alignments_r2.paf \
+    2> logs/minimap2_racon_r2.stderr.log
+
+mamba run -n racon1420 racon \
+    -t 18 \
+    05_decontaminated/SRR10848482_unclassified.fastq.gz \
+    08_polishing/longreads/pacbio_flye_alignments_r2.paf \
+    08_polishing/longreads/pacbio_flye_assembly.racon1.fasta \
+    > 08_polishing/longreads/pacbio_flye_assembly.racon2.fasta \
+    2> logs/racon_r2.stderr.log
+```
+
+## Tool: BWA-MEM + Polypolish — short-read polishing
+
+**Purpose:** Use all-alignment short-read mapping to correct SNPs and indels including in repetitive regions.
+
+**Functionality:** Polypolish differs from Pilon and other short-read polishers by using **all** alignments (`bwa mem -a`) rather than only uniquely mapping reads. This allows it to polish repetitive regions where short reads have multiple equally valid alignment positions — regions that Pilon skips entirely. Both Illumina runs (SRR10848483 and SRR10848484) are aligned separately, each with both mates processed individually. All four SAM files are then jointly used in polishing to maximise coverage (~60× combined) across all assembly regions. SAM and BWA index files are removed after polishing to conserve disk space.
+
+```{bash}
+# Index + align (abbreviated — see full pipeline document for all four SAMs)
+mamba run -n bwa bwa index \
+    08_polishing/longreads/pacbio_flye_assembly.racon2.fasta
+
+for srr in SRR10848483 SRR10848484; do
+    for read in 1 2; do
+        mamba run -n bwa bwa mem -t 16 -a \
+            08_polishing/longreads/pacbio_flye_assembly.racon2.fasta \
+            05_decontaminated/${srr}_unclassified_${read}.fastq.gz \
+            > 08_polishing/longreads/alignments_${srr}_${read}.sam \
+            2> logs/bwa_${srr}_${read}.stderr.log
+    done
+done
+
+# Filter and polish with all four SAMs
+mamba run -n polypolish polypolish filter \
+    --in1 08_polishing/longreads/alignments_SRR10848483_1.sam \
+    --in2 08_polishing/longreads/alignments_SRR10848483_2.sam \
+    --out1 08_polishing/longreads/filtered_SRR10848483_1.sam \
+    --out2 08_polishing/longreads/filtered_SRR10848483_2.sam
+
+mamba run -n polypolish polypolish filter \
+    --in1 08_polishing/longreads/alignments_SRR10848484_1.sam \
+    --in2 08_polishing/longreads/alignments_SRR10848484_2.sam \
+    --out1 08_polishing/longreads/filtered_SRR10848484_1.sam \
+    --out2 08_polishing/longreads/filtered_SRR10848484_2.sam
+
+mamba run -n polypolish polypolish polish \
+    08_polishing/longreads/pacbio_flye_assembly.racon2.fasta \
+    08_polishing/longreads/filtered_SRR10848483_1.sam \
+    08_polishing/longreads/filtered_SRR10848483_2.sam \
+    08_polishing/longreads/filtered_SRR10848484_1.sam \
+    08_polishing/longreads/filtered_SRR10848484_2.sam \
+    > 08_polishing/longreads/pacbio_flye_assembly.racon2.polished.fasta \
+    2> logs/polypolish.stderr.log
+```
+
+## Tool: NextPolish — final SNV/indel correction (2 rounds)
+
+**Purpose:** Final short-read polishing targeting residual SNPs and indels, with particular accuracy for homopolymer regions.
+
+**Functionality:** NextPolish is more accurate than Pilon for short-read polishing of long-read assemblies, particularly for indel correction in homopolymer runs which are a known error source in PacBio assemblies. It is applied after Polypolish as a final refinement step. Both Illumina runs are included in the `sgs.fofn` file to maximise coverage. A second round was applied given the initial QV 34.4 score and the 1.6% BUSCO internal stop codon rate (E:1.6%), both of which suggest residual polishing potential. `task = best` runs all available polishing sub-tasks internally.
+
+```{bash}
+PROJECT_DIR=$(pwd)
+
+cat > 08_polishing/longreads/run.cfg << EOF
+[General]
+job_type = local
+job_prefix = nextPolish
+task = best
+rewrite = yes
+rerun = 3
+parallel_jobs = 6
+multithread_jobs = 3
+genome = ${PROJECT_DIR}/08_polishing/longreads/pacbio_flye_assembly.racon2.polished.fasta
+genome_size = auto
+workdir = ${PROJECT_DIR}/08_polishing/longreads/nextpolish_work
+polish_options = -p {multithread_jobs}
+
+[sgs_option]
+sgs_fofn = ${PROJECT_DIR}/08_polishing/longreads/sgs.fofn
+sgs_options = -max_depth 100 -bwa
+EOF
+
+mamba run -n nextpolish39 nextPolish \
+    08_polishing/longreads/run.cfg \
+    > logs/nextpolish.stdout.log \
+    2> logs/nextpolish.stderr.log
+```
+
+---
+
+# Assembly Evaluation
+
+Evaluation is performed at two stages: on all three raw assembler outputs (to select the best for polishing) and on the final polished assembly. Three complementary tools are used because each measures a different dimension of assembly quality.
+
+| Tool | What it measures | When applied |
+|---|---|---|
+| BUSCO | Gene completeness (%) | Raw assemblies + polished |
+| QUAST | Structural contiguity (N50, gaps) | Raw assemblies + polished + reference |
+| Merqury | Base-level accuracy (QV) | Polished assembly |
+
+: Assembly evaluation tools and their roles {.striped}
+
+## Tool: BUSCO — gene space completeness
+
+**Purpose:** Assess what proportion of expected single-copy ortholog genes are present and complete in the assembly.
+
+**Functionality:** BUSCO is the gold-standard metric for eukaryotic genome completeness. The `hypocreaceae_odb12` lineage database is specific to the order Hypocreales, which includes *Trichoderma*, making it the most precise available reference set (4,323 BUSCOs). BUSCO is run on all three raw assembler outputs to select the best assembly for polishing, and again on the polished assembly to confirm no completeness was lost. The `E:` metric (BUSCOs with internal stop codons) is particularly informative post-polishing as it reflects residual frameshift errors.
+
+**Final polished assembly result:**
+
+```
+C:99.8% [S:99.5%, D:0.3%], F:0.0%, M:0.1%, n:4323, E:1.6%
+4316  Complete BUSCOs
+4303  Complete single-copy BUSCOs
+  13  Complete duplicated BUSCOs
+   2  Fragmented BUSCOs
+   5  Missing BUSCOs
+  69  Complete BUSCOs with internal stop codons (E:1.6%)
+```
+
+::: {.callout-warning}
+## Internal stop codons (E:1.6%)
+The 69 BUSCOs with internal stop codons reflect residual indel errors that create frameshifts. This is common after long-read assembly even with extensive polishing. At 1.6%, it is not alarming but indicates QV is below the annotation-ideal threshold of QV ≥ 40.
+:::
+
+```{bash}
+for assembler in flye raven wtdbg2; do
+    case $assembler in
+        flye)   asm=06_assemblies/flye/assembly.fasta ;;
+        raven)  asm=06_assemblies/raven/raven_assembly.fasta ;;
+        wtdbg2) asm=06_assemblies/wtdbg2/wtdbg2_assembly.fasta ;;
+    esac
+
+    mamba run -n busco busco \
+        -i ${asm} -f -m genome \
+        -l hypocreaceae_odb12 -c 18 \
+        -o 07_assembly_evaluation/raw_assembly/busco/${assembler} \
+        > logs/busco_raw_${assembler}.stdout.log \
+        2> logs/busco_raw_${assembler}.stderr.log
+done
+```
+
+## Tool: QUAST — assembly contiguity statistics
+
+**Purpose:** Structural metrics including N50, contig count, total length, and gap content.
+
+**Functionality:** QUAST provides the contiguity metrics that BUSCO does not measure. These are essential for comparing the three assembler outputs — two assemblies with identical BUSCO scores can differ substantially in N50 and fragmentation. When a reference genome is supplied (`-r`), QUAST also calculates misassembly rates, genome fraction covered, and NGA50 (N50 adjusted for aligned fraction). The `--fragmented` flag is used during reference comparison because the reference itself may be fragmented, preventing false misassembly calls at reference scaffold boundaries.
+
+**Final polished assembly result:** 70 contigs, 0.000% gaps, scaffold N50 = 1 Mbp, total length = 38.95 Mb.
+
+```{bash}
+mamba run -n quast quast \
+    ${POLISHED} \
+    -r ${REF} \
+    -t 18 \
+    --fragmented \
+    -o 07_assembly_evaluation/polished_assembly/quast_reference \
+    > logs/quast_reference.stdout.log \
+    2> logs/quast_reference.stderr.log
+```
+
+## Tool: Merqury — reference-free base accuracy (QV)
+
+**Purpose:** Estimate assembly quality value (QV) and per-base error rate without a reference genome.
+
+**Functionality:** BUSCO and QUAST measure completeness and structure but do not quantify base-level accuracy. Merqury fills this gap by comparing the k-mer spectrum of the Illumina reads against k-mers in the assembly: k-mers present in reads but absent from the assembly indicate assembly errors. The resulting QV (Phred-scale) is analogous to sequencing quality scores. A QV ≥ 40 (1 error per 10,000 bp) is the annotation-grade threshold. Both Illumina runs are combined into a single meryl k-mer database (`k=21`) to maximise k-mer coverage accuracy (~60×).
+
+**Final polished assembly result:** QV = 34.4 — approximately 1 error per 2,800 bp, or ~14,000 residual errors across the 39 Mb assembly. This aligns with the 1.6% BUSCO internal stop codon observation. The QV likely reflects the ceiling achievable with this Illumina coverage depth rather than a fixable error.
+
+```{bash}
+mamba run -n merqury meryl \
+    count k=21 \
+    output 07_assembly_evaluation/polished_assembly/merqury/reads.meryl \
+    05_decontaminated/SRR10848483_unclassified_1.fastq.gz \
+    05_decontaminated/SRR10848483_unclassified_2.fastq.gz \
+    05_decontaminated/SRR10848484_unclassified_1.fastq.gz \
+    05_decontaminated/SRR10848484_unclassified_2.fastq.gz \
+    > logs/meryl_polished.stdout.log \
+    2> logs/meryl_polished.stderr.log
+
+MERQURY_DIR=$(pwd)/07_assembly_evaluation/polished_assembly/merqury
+cd "${MERQURY_DIR}"
+mamba run -n merqury merqury.sh \
+    reads.meryl \
+    ../../../08_polishing/longreads/nextpolish_work/genome.nextpolish.fasta \
+    merqury_output
+cd -
+```
+
+---
+
+# Reference-Guided Scaffolding
+
+## Tool: RagTag scaffold — reference-guided contig ordering
+
+**Purpose:** Order, orient, and join the 70 assembly contigs into pseudochromosomes using a chromosome-level reference.
+
+**Functionality:** The polished assembly contained 70 high-quality contigs with 0% gaps and 1 Mbp N50 — excellent structural quality but lacking chromosome-scale ordering. RagTag uses minimap2 internally to align contigs against a chromosome-level *T. harzianum* reference (GCA_019097725.1, SYAU_Tha_1.0), ordering and orienting contigs relative to each reference chromosome. This produces a biologically interpretable pseudochromosome assembly that improves gene model continuity during annotation and enables comparative genomic analyses.
+
+The `-u` flag is critical — it retains all unplaced contigs in the output rather than discarding them, preserving any TW11-specific sequences absent from the reference strain. Gaps between joined contigs are represented as 100 N runs in the FASTA and as W/U records in the AGP file.
+
+::: {.callout-important}
+## Scaffolding vs polishing order
+Scaffolding is performed **after** polishing and **before** repeat masking. RagTag and other scaffolders work best on unmasked sequence because minimap2 alignment is inhibited by soft-masked bases. Repeat masking is always the final step before annotation.
+:::
+
+| Parameter | Justification |
+|---|---|
+| `-u` | Retain unplaced contigs — do not discard strain-specific sequences |
+| `-t 18` | Threads for internal minimap2 alignment |
+
+```{bash}
+REF=00_downloads/reference/GCA_019097725.1/ncbi_dataset/data/\
+GCA_019097725.1/GCA_019097725.1_SYAU_Tha_1.0_genomic.fna
+POLISHED=08_polishing/longreads/nextpolish_work_r2/genome.nextpolish.fasta
+
+mamba run -n ragtag ragtag.py scaffold \
+    ${REF} \
+    ${POLISHED} \
+    -o 09_ragtag/scaffold \
+    -t 18 \
+    -u \
+    > logs/ragtag_scaffold.stdout.log \
+    2> logs/ragtag_scaffold.stderr.log
+```
+
+**Key outputs:**
+
+- `ragtag.scaffold.fasta` — scaffolded assembly with pseudochromosomes
+- `ragtag.scaffold.agp` — AGP file recording contig placement and orientation
+- `ragtag.scaffold.stats` — summary of placed vs unplaced contigs and confidence scores
+
+---
+
+# Repeat Masking
+
+Repeat masking is a mandatory prerequisite for structural gene annotation. Gene predictors (BRAKER3, Funannotate, Augustus) rely on soft-masked sequence — lowercase letters indicating repeat regions — to avoid predicting gene models inside transposable elements and other repetitive elements.
+
+## Tool: RepeatModeler2 — de novo repeat library construction
+
+**Purpose:** Build a species-specific repeat library from scratch by mining the assembly for repetitive sequences.
+
+**Functionality:** Relying solely on generic Dfam repeat databases would miss *T. harzianum*-specific transposable elements, LTRs, and tandem repeats not represented in the database. RepeatModeler2 constructs a custom library directly from the assembly using RECON (graph-based repeat finding) and RepeatScout (frequency-based repeat finding), then classifies discovered families by homology to known repeats. This is particularly important for *Trichoderma*, which has undergone significant TE expansion and has a higher repeat content than many other fungi.
+
+The `-LTRStruct` flag activates an additional structural LTR retrotransposon discovery pipeline using LTR_Harvest and LTR_retriever, providing more comprehensive detection of full-length LTR elements than the sequence-based approach alone.
+
+The `-pa` flag sets the number of parallel jobs. Each RMBlast job uses 4 cores, so with 18 available cores: `18 ÷ 4 = 4` parallel jobs (using 16 cores). Passing more parallel jobs than core capacity over-subscribes the machine.
+
+::: {.callout-note}
+## Runtime
+RepeatModeler2 on a ~39 Mb fungal genome typically runs for 12–24 hours with 4 parallel jobs. Run inside a `tmux` or `screen` session. If interrupted, recovery is possible with the `-recoverDir` flag pointing to the `RM_*/` working directory.
+:::
+
+```{bash}
+SCAFFOLDED=09_ragtag/scaffold/ragtag.scaffold.fasta
+
+mamba run -n repeatmodeler BuildDatabase \
+    -name 10_repeat_masking/repeatmodeler/trichoderma_harzianum \
+    ${SCAFFOLDED} \
+    > logs/repeatmodeler_builddatabase.stdout.log \
+    2> logs/repeatmodeler_builddatabase.stderr.log
+
+cd 10_repeat_masking/repeatmodeler
+
+mamba run -n repeatmodeler RepeatModeler \
+    -database trichoderma_harzianum \
+    -pa 4 \
+    -LTRStruct \
+    > ../../logs/repeatmodeler.stdout.log \
+    2> ../../logs/repeatmodeler.stderr.log
+
+cd -
+```
+
+**Key output:** `10_repeat_masking/repeatmodeler/trichoderma_harzianum-families.fa` — the custom repeat consensus library passed to RepeatMasker.
+
+## Tool: RepeatMasker — soft-masking the assembly
+
+**Purpose:** Identify all repeat instances in the assembly and convert them to lowercase (soft-masked) sequence.
+
+**Functionality:** RepeatMasker is the standard tool for eukaryotic genome masking. **Soft masking** (`-xsmall`) is specifically required by BRAKER3 and Funannotate: it converts repeat bases to lowercase letters rather than replacing them with N, preserving the sequence for alignment tools while signalling to gene predictors to down-weight or avoid those regions. Hard masking (replacing with N) is not appropriate here as it fragments gene models near repeat boundaries.
+
+The custom RepeatModeler2 library is provided via `-lib` to ensure all strain-specific repeats are masked. RepeatMasker is run on the scaffolded assembly because masking must always be applied to the final sequence to be annotated. The `-gff` flag produces a repeat annotation track for downstream visualisation and analysis.
+
+::: {.callout-note}
+## Absolute path requirement
+RepeatMasker requires an absolute path for the `-dir` output directory. Use `$(pwd)` or `${PROJECT_DIR}` to construct the path, not a relative path, or RepeatMasker will silently write output to a temporary `RM_*/` directory instead.
+:::
+
+| Parameter | Justification |
+|---|---|
+| `-lib` | Custom repeat library from RepeatModeler2 |
+| `-xsmall` | Soft-mask (lowercase) required for BRAKER3/Funannotate |
+| `-gff` | GFF repeat annotation track for downstream use |
+| `-pa 4` | 4 parallel jobs (4 cores each = 16 cores total) |
+
+```{bash}
+PROJECT_DIR=$(pwd)
+REPEAT_LIB=${PROJECT_DIR}/10_repeat_masking/repeatmodeler/trichoderma_harzianum-families.fa
+SCAFFOLDED=${PROJECT_DIR}/09_ragtag/scaffold/ragtag.scaffold.fasta
+
+mamba run -n repeatmodeler RepeatMasker \
+    -lib ${REPEAT_LIB} \
+    -pa 4 \
+    -xsmall \
+    -gff \
+    -dir ${PROJECT_DIR}/10_repeat_masking/repeatmasker \
+    ${SCAFFOLDED} \
+    > logs/repeatmasker.stdout.log \
+    2> logs/repeatmasker.stderr.log
+```
+
+**Key outputs:**
+
+- `ragtag.scaffold.fasta.masked` — soft-masked assembly; input for all annotation steps
+- `ragtag.scaffold.fasta.tbl` — repeat content summary (expected 5–12% for *T. harzianum*)
+- `ragtag.scaffold.fasta.gff` — GFF3 repeat annotation track
+- `ragtag.scaffold.fasta.out` — full tab-delimited repeat hit table
+
+---
+
+# Summary and Next Steps
+
+## Pipeline summary
+
+```
+Raw reads (SRA)
+    ↓  SeqFetcher
+Quality control (SeqKit, LongReadSum, FastQC, MultiQC)
+    ↓  fastplong / fastp
+Filtered reads
+    ↓  Kraken2
+Decontaminated reads
+    ↓  Flye / Raven / wtdbg2
+Raw assemblies → BUSCO + QUAST → select best (Flye)
+    ↓  minimap2 + Racon (×2) → Polypolish → NextPolish (×2)
+Polished assembly → BUSCO + QUAST + Merqury
+    ↓  RagTag scaffold
+Scaffolded assembly (70 pseudochromosomes)
+    ↓  RepeatModeler2 → RepeatMasker
+Soft-masked assembly ← ready for annotation
+```
+
+## Assembly quality at a glance
+
+| Stage | BUSCO | N50 | QV |
+|---|---|---|---|
+| Raw Flye assembly | evaluated | — | — |
+| After Racon + Polypolish + NextPolish | 99.8% | 1 Mbp | 34.4 |
+| After RagTag scaffolding | 99.8% | chromosome-scale | — |
+| After repeat masking | input for annotation | — | — |
+
+## Recommended next steps
+
+The soft-masked assembly is ready for structural annotation. Recommended tools:
+
+1. **BRAKER3** — combines RNA-seq evidence and protein homology via Augustus and GeneMark. Most accurate for fungi when RNA-seq is available.
+2. **Funannotate** — end-to-end fungal annotation pipeline with good defaults for *Trichoderma*.
+
+Functional annotation to follow with:
+
+- **InterProScan** — domain and protein family annotation (Pfam, PANTHER, TIGRFAM)
+- **eggNOG-mapper** — COG/KEGG/GO term assignment via orthology
+- **antiSMASH** (fungal mode) — secondary metabolite biosynthetic gene cluster identification, highly relevant for *T. harzianum* biocontrol research
+- **dbCAN / MEROPS** — CAZyme and protease annotation
