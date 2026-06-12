@@ -1,0 +1,7 @@
+name: ragtag
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - ragtag
+prefix: /home/gianlucca/miniforge3/envs/ragtag

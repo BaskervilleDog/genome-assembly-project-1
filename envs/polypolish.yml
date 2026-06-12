@@ -1,0 +1,7 @@
+name: polypolish
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - polypolish
+prefix: /home/gianlucca/miniforge3/envs/polypolish

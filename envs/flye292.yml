@@ -1,0 +1,7 @@
+name: flye292
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - flye=2.9.2
+prefix: /home/gianlucca/miniforge3/envs/flye292

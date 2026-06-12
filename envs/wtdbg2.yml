@@ -1,0 +1,8 @@
+name: wtdbg2
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - wtdbg
+  - python
+prefix: /home/gianlucca/miniforge3/envs/wtdbg2

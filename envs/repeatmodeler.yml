@@ -1,0 +1,7 @@
+name: repeatmodeler
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - repeatmodeler
+prefix: /home/gianlucca/miniforge3/envs/repeatmodeler

@@ -1,0 +1,7 @@
+name: busco
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - busco
+prefix: /home/gianlucca/miniforge3/envs/busco

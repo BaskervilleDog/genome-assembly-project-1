@@ -1,0 +1,8 @@
+name: fastp
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - fastp
+  - python
+prefix: /home/gianlucca/miniforge3/envs/fastp

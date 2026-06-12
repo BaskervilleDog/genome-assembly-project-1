@@ -1,0 +1,7 @@
+name: merqury
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - merqury
+prefix: /home/gianlucca/miniforge3/envs/merqury

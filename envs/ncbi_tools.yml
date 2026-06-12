@@ -1,0 +1,14 @@
+name: ncbi_tools
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - sra-tools
+  - parallel-fastq-dump
+  - ncbi-datasets-cli
+  - parallel
+  - jq
+  - p7zip
+  - entrez-direct
+  - biopython
+prefix: /home/gianlucca/miniforge3/envs/ncbi_tools

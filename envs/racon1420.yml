@@ -1,0 +1,7 @@
+name: racon1420
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - racon=1.4.20
+prefix: /home/gianlucca/miniforge3/envs/racon1420

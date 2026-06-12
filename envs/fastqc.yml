@@ -1,0 +1,8 @@
+name: fastqc
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - fastqc
+  - python
+prefix: /home/gianlucca/miniforge3/envs/fastqc

@@ -1,0 +1,7 @@
+name: quast
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - quast
+prefix: /home/gianlucca/miniforge3/envs/quast

@@ -1,0 +1,11 @@
+name: nextpolish39
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - nextpolish
+  - bwa
+  - samtools
+  - pip
+prefix: /home/gianlucca/miniforge3/envs/nextpolish39

@@ -1,0 +1,7 @@
+name: longreadsum
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - longreadsum
+prefix: /home/gianlucca/miniforge3/envs/longreadsum

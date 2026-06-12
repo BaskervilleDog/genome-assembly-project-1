@@ -86,7 +86,10 @@ project/
 ├── 10_repeat_masking/
 │   ├── repeatmodeler/      # De novo repeat library
 │   └── repeatmasker/       # Soft-masked assembly
+├── envs/                   # Conda environments for each tool
 └── logs/                   # All stdout/stderr logs
+
+
 ```
 
 ---

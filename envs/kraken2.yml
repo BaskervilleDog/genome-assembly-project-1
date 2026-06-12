@@ -1,0 +1,7 @@
+name: kraken2
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - kraken2
+prefix: /home/gianlucca/miniforge3/envs/kraken2

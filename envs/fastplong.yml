@@ -1,0 +1,7 @@
+name: fastplong
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - fastplong
+prefix: /home/gianlucca/miniforge3/envs/fastplong

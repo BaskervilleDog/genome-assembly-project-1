@@ -1,0 +1,8 @@
+name: seqkit
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - seqkit
+  - python
+prefix: /home/gianlucca/miniforge3/envs/seqkit
