@@ -3,5 +3,33 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - racon=1.4.20
+  - _openmp_mutex=4.5=20_gnu
+  - bzip2=1.0.8=hda65f42_9
+  - ca-certificates=2026.5.20=hbd8a1cb_0
+  - ld_impl_linux-64=2.45.1=bootstrap_ha15bf96_2
+  - libexpat=2.8.1=hecca717_0
+  - libffi=3.5.2=h3435931_0
+  - libgcc=15.2.0=he0feb66_19
+  - libgcc-ng=15.2.0=h69a702a_19
+  - libgomp=15.2.0=he0feb66_19
+  - liblzma=5.8.3=hb03c661_0
+  - liblzma-devel=5.8.3=hb03c661_0
+  - libnsl=2.0.1=hb9d3cd8_1
+  - libsqlite=3.46.0=hde9e2c9_0
+  - libstdcxx=15.2.0=h934c35e_19
+  - libstdcxx-ng=15.2.0=hdf11a46_19
+  - libuuid=2.42.1=h5347b49_0
+  - libxcrypt=4.4.36=hd590300_1
+  - libzlib=1.2.13=h4ab18f5_6
+  - ncurses=6.6=hdb14827_0
+  - openssl=3.6.2=h35e630c_0
+  - python=3.12.3=hab00c5b_0_cpython
+  - racon=1.4.20=hd03093a_2
+  - readline=8.3=h853b02a_0
+  - tk=8.6.13=noxft_h4845f30_101
+  - tzdata=2025c=hc9c84f9_1
+  - xz=5.8.3=ha02ee65_0
+  - xz-gpl-tools=5.8.3=ha02ee65_0
+  - xz-tools=5.8.3=hb03c661_0
+  - zlib=1.2.13=h4ab18f5_6
 prefix: /home/gianlucca/miniforge3/envs/racon1420
