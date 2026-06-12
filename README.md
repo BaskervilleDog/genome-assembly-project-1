@@ -70,16 +70,18 @@ Flye was selected for polishing because it produced the highest contiguity while
 
 ## Generated Results
 
+## Generated Results
+
 | Result | Location |
 |----------|----------|
-| MultiQC (raw reads) | `results/qc/multiqc_raw.html` |
-| MultiQC (filtered reads) | `results/qc/multiqc_filtered.html` |
-| BUSCO comparisons | `results/assembly/raw/` |
-| Final BUSCO | `results/assembly/polished/busco.txt` |
-| QUAST | `results/assembly/polished/quast.tsv` |
-| Merqury QV | `results/assembly/polished/merqury_qv.txt` |
-| RagTag statistics | `results/scaffolding/` |
-| RepeatMasker summary | `results/repeat_masking/` |
+| MultiQC (raw reads) | [multiqc_raw.html](results/qc/multiqc_raw.html) |
+| MultiQC (filtered reads) | [multiqc_filtered.html](results/qc/multiqc_filtered.html) |
+| BUSCO comparisons | [assembly/raw](results/assembly/raw/) |
+| Final BUSCO | [busco.txt](results/assembly/polished/busco.txt) |
+| QUAST | [quast.tsv](results/assembly/polished/quast.tsv) |
+| Merqury QV | [merqury_qv.txt](results/assembly/polished/merqury_qv.txt) |
+| RagTag statistics | [scaffolding](results/scaffolding/) |
+| RepeatMasker summary | [repeat_masking](results/repeat_masking/) |
 
 ---
 
