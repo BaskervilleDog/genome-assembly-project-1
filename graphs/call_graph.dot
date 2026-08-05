@@ -1,0 +1,146 @@
+digraph call_graph {
+  rankdir="LR";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#888888"];
+  subgraph "cluster_lib.assemble" {
+    label="lib.assemble"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.assemble.flye" [label="flye", fillcolor="#cfe8ff", shape=box];
+    "lib.assemble.raven" [label="raven", fillcolor="#cfe8ff", shape=box];
+    "lib.assemble.wtdbg2" [label="wtdbg2", fillcolor="#cfe8ff", shape=box];
+  }
+  subgraph "cluster_lib.decontaminate" {
+    label="lib.decontaminate"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.decontaminate.kraken2_single" [label="kraken2_single", fillcolor="#d9f2d9", shape=box];
+    "lib.decontaminate.kraken2_paired" [label="kraken2_paired", fillcolor="#d9f2d9", shape=box];
+  }
+  subgraph "cluster_lib.download" {
+    label="lib.download"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.download.ensure_seqfetcher" [label="ensure_seqfetcher", fillcolor="#ffe8cc", shape=box];
+    "lib.download.sra_reads" [label="sra_reads", fillcolor="#ffe8cc", shape=box];
+  }
+  subgraph "cluster_lib.evaluate" {
+    label="lib.evaluate"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.evaluate.busco" [label="busco", fillcolor="#f4d9ff", shape=box];
+    "lib.evaluate.quast" [label="quast", fillcolor="#f4d9ff", shape=box];
+    "lib.evaluate.quast_reference" [label="quast_reference", fillcolor="#f4d9ff", shape=box];
+    "lib.evaluate.meryl_count" [label="meryl_count", fillcolor="#f4d9ff", shape=box];
+    "lib.evaluate.merqury" [label="merqury", fillcolor="#f4d9ff", shape=box];
+  }
+  subgraph "cluster_lib.filter" {
+    label="lib.filter"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.filter.pacbio" [label="pacbio", fillcolor="#ffe0e0", shape=box];
+    "lib.filter.illumina" [label="illumina", fillcolor="#ffe0e0", shape=box];
+  }
+  subgraph "cluster_lib.io" {
+    label="lib.io"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.io.run_tool" [label="run_tool", fillcolor="#e0f7f5", shape=box];
+    "lib.io.log_step" [label="log_step", fillcolor="#e0f7f5", shape=box];
+    "lib.io.log_info" [label="log_info", fillcolor="#e0f7f5", shape=box];
+    "lib.io.require_file" [label="require_file", fillcolor="#e0f7f5", shape=box];
+  }
+  subgraph "cluster_lib.mask" {
+    label="lib.mask"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.mask.build_database" [label="build_database", fillcolor="#fff6cc", shape=box];
+    "lib.mask.repeatmodeler" [label="repeatmodeler", fillcolor="#fff6cc", shape=box];
+    "lib.mask.repeatmasker" [label="repeatmasker", fillcolor="#fff6cc", shape=box];
+  }
+  subgraph "cluster_lib.polish" {
+    label="lib.polish"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.polish.racon_round" [label="racon_round", fillcolor="#cfe8ff", shape=box];
+    "lib.polish.polypolish" [label="polypolish", fillcolor="#cfe8ff", shape=box];
+    "lib.polish.nextpolish_round" [label="nextpolish_round", fillcolor="#cfe8ff", shape=box];
+  }
+  subgraph "cluster_lib.qc" {
+    label="lib.qc"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.qc.seqkit_stats" [label="seqkit_stats", fillcolor="#d9f2d9", shape=box];
+    "lib.qc.longreadsum" [label="longreadsum", fillcolor="#d9f2d9", shape=box];
+    "lib.qc.fastqc" [label="fastqc", fillcolor="#d9f2d9", shape=box];
+    "lib.qc.multiqc" [label="multiqc", fillcolor="#d9f2d9", shape=box];
+  }
+  subgraph "cluster_lib.scaffold" {
+    label="lib.scaffold"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "lib.scaffold.ragtag" [label="ragtag", fillcolor="#ffe8cc", shape=box];
+  }
+  subgraph "cluster_scripts.01_download" {
+    label="scripts.01_download"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "scripts.01_download" [label="scripts.01_download", fillcolor="#f4d9ff", shape=component];
+  }
+  subgraph "cluster_scripts.02_assembly" {
+    label="scripts.02_assembly"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "scripts.02_assembly" [label="scripts.02_assembly", fillcolor="#ffe0e0", shape=component];
+  }
+  subgraph "cluster_scripts.03_quality_assessment" {
+    label="scripts.03_quality_assessment"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "scripts.03_quality_assessment" [label="scripts.03_quality_assessment", fillcolor="#e0f7f5", shape=component];
+  }
+  subgraph "cluster_scripts.04_env" {
+    label="scripts.04_env"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "scripts.04_env" [label="scripts.04_env", fillcolor="#fff6cc", shape=component];
+  }
+  subgraph "cluster_scripts.check_deps" {
+    label="scripts.check_deps"; style="dashed"; fontname="Helvetica"; fontsize=11;
+    "scripts.check_deps" [label="scripts.check_deps", fillcolor="#cfe8ff", shape=component];
+    "scripts.check_deps.check" [label="check", fillcolor="#cfe8ff", shape=box];
+  }
+  "lib.assemble.flye" -> "lib.io.run_tool";
+  "lib.assemble.raven" -> "lib.io.run_tool";
+  "lib.assemble.wtdbg2" -> "lib.io.run_tool";
+  "lib.decontaminate.kraken2_paired" -> "lib.io.run_tool";
+  "lib.decontaminate.kraken2_single" -> "lib.io.run_tool";
+  "lib.download.ensure_seqfetcher" -> "lib.io.log_info";
+  "lib.download.ensure_seqfetcher" -> "lib.io.run_tool";
+  "lib.download.sra_reads" -> "lib.io.run_tool";
+  "lib.evaluate.busco" -> "lib.io.run_tool";
+  "lib.evaluate.merqury" -> "lib.io.run_tool";
+  "lib.evaluate.meryl_count" -> "lib.io.run_tool";
+  "lib.evaluate.quast" -> "lib.io.run_tool";
+  "lib.evaluate.quast_reference" -> "lib.io.run_tool";
+  "lib.filter.illumina" -> "lib.io.run_tool";
+  "lib.filter.pacbio" -> "lib.io.run_tool";
+  "lib.mask.build_database" -> "lib.io.run_tool";
+  "lib.mask.repeatmasker" -> "lib.io.run_tool";
+  "lib.mask.repeatmodeler" -> "lib.io.run_tool";
+  "lib.polish.nextpolish_round" -> "lib.io.run_tool";
+  "lib.polish.polypolish" -> "lib.io.run_tool";
+  "lib.polish.racon_round" -> "lib.io.run_tool";
+  "lib.qc.fastqc" -> "lib.io.run_tool";
+  "lib.qc.longreadsum" -> "lib.io.run_tool";
+  "lib.qc.multiqc" -> "lib.io.run_tool";
+  "lib.qc.seqkit_stats" -> "lib.io.run_tool";
+  "lib.scaffold.ragtag" -> "lib.io.run_tool";
+  "scripts.01_download" -> "lib.download.ensure_seqfetcher";
+  "scripts.01_download" -> "lib.download.sra_reads";
+  "scripts.01_download" -> "lib.io.log_info";
+  "scripts.01_download" -> "lib.io.log_step";
+  "scripts.01_download" -> "lib.qc.fastqc";
+  "scripts.01_download" -> "lib.qc.longreadsum";
+  "scripts.01_download" -> "lib.qc.multiqc";
+  "scripts.01_download" -> "lib.qc.seqkit_stats";
+  "scripts.02_assembly" -> "lib.assemble.flye";
+  "scripts.02_assembly" -> "lib.assemble.raven";
+  "scripts.02_assembly" -> "lib.assemble.wtdbg2";
+  "scripts.02_assembly" -> "lib.decontaminate.kraken2_paired";
+  "scripts.02_assembly" -> "lib.decontaminate.kraken2_single";
+  "scripts.02_assembly" -> "lib.filter.illumina";
+  "scripts.02_assembly" -> "lib.filter.pacbio";
+  "scripts.02_assembly" -> "lib.io.log_info";
+  "scripts.02_assembly" -> "lib.io.log_step";
+  "scripts.02_assembly" -> "lib.polish.nextpolish_round";
+  "scripts.02_assembly" -> "lib.polish.polypolish";
+  "scripts.02_assembly" -> "lib.polish.racon_round";
+  "scripts.02_assembly" -> "lib.qc.fastqc";
+  "scripts.02_assembly" -> "lib.qc.multiqc";
+  "scripts.02_assembly" -> "lib.qc.seqkit_stats";
+  "scripts.03_quality_assessment" -> "lib.evaluate.busco";
+  "scripts.03_quality_assessment" -> "lib.evaluate.merqury";
+  "scripts.03_quality_assessment" -> "lib.evaluate.meryl_count";
+  "scripts.03_quality_assessment" -> "lib.evaluate.quast";
+  "scripts.03_quality_assessment" -> "lib.evaluate.quast_reference";
+  "scripts.03_quality_assessment" -> "lib.io.log_info";
+  "scripts.03_quality_assessment" -> "lib.io.log_step";
+  "scripts.03_quality_assessment" -> "lib.mask.build_database";
+  "scripts.03_quality_assessment" -> "lib.mask.repeatmasker";
+  "scripts.03_quality_assessment" -> "lib.mask.repeatmodeler";
+  "scripts.03_quality_assessment" -> "lib.scaffold.ragtag";
+  "scripts.check_deps" -> "scripts.check_deps.check";
+}

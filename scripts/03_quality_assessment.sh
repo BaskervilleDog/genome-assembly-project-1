@@ -21,16 +21,24 @@
 #   repeatmodeler| RepeatModeler, RepeatMasker
 #
 # Outputs: 07_assembly_evaluation/, 09_ragtag/, 10_repeat_masking/
+#
+# Thin orchestrator — see lib/*.sh for the actual tool invocations.
 #==============================================================================
 
 set -euo pipefail
+
+PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+for f in "$PROJECT_DIR"/lib/*.sh; do
+    # shellcheck source=/dev/null
+    source "$f"
+done
 
 #==============================================================================
 # CONFIGURATION
 #==============================================================================
 
 THREADS=18
-PROJECT_DIR="$(pwd)"
 
 # Key paths
 ASM_DIR="${PROJECT_DIR}/06_assemblies"
@@ -67,21 +75,6 @@ mkdir -p \
     "${LOG_DIR}"
 
 #==============================================================================
-# UTILITY FUNCTIONS
-#==============================================================================
-
-log_step() {
-    echo ""
-    echo "========================================================================"
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] STEP: $*"
-    echo "========================================================================"
-}
-
-log_info() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [INFO] $*"
-}
-
-#==============================================================================
 # STEP 1 — EVALUATE RAW ASSEMBLIES (BUSCO + QUAST)
 #==============================================================================
 # BUSCO and QUAST are applied to all three raw assembler outputs to select
@@ -94,7 +87,7 @@ log_info() {
 # The E: metric (BUSCOs with internal stop codons) is particularly informative
 # post-polishing as it reflects residual frameshift errors from indels.
 
-log_step "Evaluate raw assemblies: BUSCO (gene completeness)"
+io::log_step "Evaluate raw assemblies: BUSCO (gene completeness)"
 
 for assembler in flye raven wtdbg2; do
     case "${assembler}" in
@@ -103,30 +96,27 @@ for assembler in flye raven wtdbg2; do
         wtdbg2) asm="${ASM_DIR}/wtdbg2/wtdbg2_assembly.fasta" ;;
     esac
 
-    log_info "BUSCO — ${assembler}"
-    mamba run -n busco busco \
-        -i "${asm}" -f -m genome \
-        -l "${BUSCO_LINEAGE}" -c "${THREADS}" \
-        -o "${EVAL_DIR}/raw_assembly/busco/${assembler}" \
-        > "${LOG_DIR}/busco_raw_${assembler}.stdout.log" \
-        2> "${LOG_DIR}/busco_raw_${assembler}.stderr.log"
+    io::log_info "BUSCO — ${assembler}"
+    evaluate::busco \
+        "${asm}" "${BUSCO_LINEAGE}" "${THREADS}" \
+        "${EVAL_DIR}/raw_assembly/busco/${assembler}" \
+        "${LOG_DIR}/busco_raw_${assembler}.stdout.log" \
+        "${LOG_DIR}/busco_raw_${assembler}.stderr.log"
 done
 
-log_step "Evaluate raw assemblies: QUAST (contiguity)"
+io::log_step "Evaluate raw assemblies: QUAST (contiguity)"
 
 # Compare all three raw assemblies in a single QUAST run
-mamba run -n quast quast \
+evaluate::quast \
+    "${THREADS}" "${EVAL_DIR}/raw_assembly/quast" \
+    "${LOG_DIR}/quast_raw.stdout.log" "${LOG_DIR}/quast_raw.stderr.log" \
+    "Flye,Raven,wtdbg2" \
     "${ASM_DIR}/flye/assembly.fasta" \
     "${ASM_DIR}/raven/raven_assembly.fasta" \
-    "${ASM_DIR}/wtdbg2/wtdbg2_assembly.fasta" \
-    --labels "Flye,Raven,wtdbg2" \
-    -t "${THREADS}" \
-    -o "${EVAL_DIR}/raw_assembly/quast" \
-    > "${LOG_DIR}/quast_raw.stdout.log" \
-    2> "${LOG_DIR}/quast_raw.stderr.log"
+    "${ASM_DIR}/wtdbg2/wtdbg2_assembly.fasta"
 
-log_info "Raw assembly evaluation complete."
-log_info "Review ${EVAL_DIR}/raw_assembly/ to confirm Flye is the best assembly before proceeding."
+io::log_info "Raw assembly evaluation complete."
+io::log_info "Review ${EVAL_DIR}/raw_assembly/ to confirm Flye is the best assembly before proceeding."
 
 #==============================================================================
 # STEP 2 — EVALUATE POLISHED ASSEMBLY (BUSCO + QUAST + Merqury)
@@ -142,53 +132,37 @@ log_info "Review ${EVAL_DIR}/raw_assembly/ to confirm Flye is the best assembly 
 #              indicate assembly errors. QV ≥ 40 is annotation-grade.
 #              Both Illumina runs are combined (k=21) for ~60× coverage.
 
-log_step "Evaluate polished assembly: BUSCO"
+io::log_step "Evaluate polished assembly: BUSCO"
 
-mamba run -n busco busco \
-    -i "${POLISHED}" -f -m genome \
-    -l "${BUSCO_LINEAGE}" -c "${THREADS}" \
-    -o "${EVAL_DIR}/polished_assembly/busco/polished" \
-    > "${LOG_DIR}/busco_polished.stdout.log" \
-    2> "${LOG_DIR}/busco_polished.stderr.log"
+evaluate::busco \
+    "${POLISHED}" "${BUSCO_LINEAGE}" "${THREADS}" \
+    "${EVAL_DIR}/polished_assembly/busco/polished" \
+    "${LOG_DIR}/busco_polished.stdout.log" "${LOG_DIR}/busco_polished.stderr.log"
 
-log_step "Evaluate polished assembly: QUAST (with reference)"
+io::log_step "Evaluate polished assembly: QUAST (with reference)"
 
-mamba run -n quast quast \
-    "${POLISHED}" \
-    -r "${REF}" \
-    -t "${THREADS}" \
-    --fragmented \
-    -o "${EVAL_DIR}/polished_assembly/quast_reference" \
-    > "${LOG_DIR}/quast_reference.stdout.log" \
-    2> "${LOG_DIR}/quast_reference.stderr.log"
+evaluate::quast_reference \
+    "${POLISHED}" "${REF}" "${THREADS}" \
+    "${EVAL_DIR}/polished_assembly/quast_reference" \
+    "${LOG_DIR}/quast_reference.stdout.log" "${LOG_DIR}/quast_reference.stderr.log"
 
-log_step "Evaluate polished assembly: Merqury (reference-free QV)"
+io::log_step "Evaluate polished assembly: Merqury (reference-free QV)"
 
 # Build meryl k-mer database from both Illumina runs (combined ~60× coverage)
-mamba run -n merqury meryl \
-    count k=21 \
-    output "${EVAL_DIR}/polished_assembly/merqury/reads.meryl" \
+evaluate::meryl_count \
+    21 "${EVAL_DIR}/polished_assembly/merqury/reads.meryl" \
+    "${LOG_DIR}/meryl_polished.stdout.log" "${LOG_DIR}/meryl_polished.stderr.log" \
     "${DECON_DIR}/SRR10848483_unclassified_1.fastq.gz" \
     "${DECON_DIR}/SRR10848483_unclassified_2.fastq.gz" \
     "${DECON_DIR}/SRR10848484_unclassified_1.fastq.gz" \
-    "${DECON_DIR}/SRR10848484_unclassified_2.fastq.gz" \
-    > "${LOG_DIR}/meryl_polished.stdout.log" \
-    2> "${LOG_DIR}/meryl_polished.stderr.log"
+    "${DECON_DIR}/SRR10848484_unclassified_2.fastq.gz"
 
 # Run Merqury (must be run from within the Merqury output directory)
-MERQURY_DIR="${EVAL_DIR}/polished_assembly/merqury"
-cd "${MERQURY_DIR}"
+evaluate::merqury \
+    "${EVAL_DIR}/polished_assembly/merqury" reads.meryl "${POLISHED}" merqury_output \
+    "${LOG_DIR}/merqury_polished.stdout.log" "${LOG_DIR}/merqury_polished.stderr.log"
 
-mamba run -n merqury merqury.sh \
-    reads.meryl \
-    "${POLISHED}" \
-    merqury_output \
-    >> "${LOG_DIR}/merqury_polished.stdout.log" \
-    2>> "${LOG_DIR}/merqury_polished.stderr.log"
-
-cd "${PROJECT_DIR}"
-
-log_info "Polished assembly evaluation complete → ${EVAL_DIR}/polished_assembly/"
+io::log_info "Polished assembly evaluation complete → ${EVAL_DIR}/polished_assembly/"
 
 #==============================================================================
 # STEP 3 — REFERENCE-GUIDED SCAFFOLDING (RagTag)
@@ -208,34 +182,27 @@ log_info "Polished assembly evaluation complete → ${EVAL_DIR}/polished_assembl
 # Gaps between joined contigs are represented as 100-N runs in the FASTA
 # and as W/U records in the AGP file.
 
-log_step "Reference-guided scaffolding: RagTag"
+io::log_step "Reference-guided scaffolding: RagTag"
 
-mamba run -n ragtag ragtag.py scaffold \
-    "${REF}" \
-    "${POLISHED}" \
-    -o "${RAGTAG_DIR}/scaffold" \
-    -t "${THREADS}" \
-    -u \
-    > "${LOG_DIR}/ragtag_scaffold.stdout.log" \
-    2> "${LOG_DIR}/ragtag_scaffold.stderr.log"
+scaffold::ragtag \
+    "${REF}" "${POLISHED}" "${RAGTAG_DIR}/scaffold" "${THREADS}" \
+    "${LOG_DIR}/ragtag_scaffold.stdout.log" "${LOG_DIR}/ragtag_scaffold.stderr.log"
 
 SCAFFOLDED="${RAGTAG_DIR}/scaffold/ragtag.scaffold.fasta"
 
-log_info "Scaffolded assembly → ${SCAFFOLDED}"
-log_info "Key outputs:"
-log_info "  ragtag.scaffold.fasta  — pseudochromosome assembly"
-log_info "  ragtag.scaffold.agp    — contig placement and orientation"
-log_info "  ragtag.scaffold.stats  — placed vs unplaced contig summary"
+io::log_info "Scaffolded assembly → ${SCAFFOLDED}"
+io::log_info "Key outputs:"
+io::log_info "  ragtag.scaffold.fasta  — pseudochromosome assembly"
+io::log_info "  ragtag.scaffold.agp    — contig placement and orientation"
+io::log_info "  ragtag.scaffold.stats  — placed vs unplaced contig summary"
 
 # Evaluate scaffolded assembly with BUSCO (confirm no completeness lost)
-log_step "Evaluate scaffolded assembly: BUSCO"
+io::log_step "Evaluate scaffolded assembly: BUSCO"
 
-mamba run -n busco busco \
-    -i "${SCAFFOLDED}" -f -m genome \
-    -l "${BUSCO_LINEAGE}" -c "${THREADS}" \
-    -o "${EVAL_DIR}/polished_assembly/busco/scaffolded" \
-    > "${LOG_DIR}/busco_scaffolded.stdout.log" \
-    2> "${LOG_DIR}/busco_scaffolded.stderr.log"
+evaluate::busco \
+    "${SCAFFOLDED}" "${BUSCO_LINEAGE}" "${THREADS}" \
+    "${EVAL_DIR}/polished_assembly/busco/scaffolded" \
+    "${LOG_DIR}/busco_scaffolded.stdout.log" "${LOG_DIR}/busco_scaffolded.stderr.log"
 
 #==============================================================================
 # STEP 4 — DE NOVO REPEAT LIBRARY (RepeatModeler2)
@@ -256,30 +223,20 @@ mamba run -n busco busco \
 # NOTE: RepeatModeler2 on ~39 Mb typically runs 12–24 hours.
 # Run inside tmux or screen. Recovery: -recoverDir RM_*/ directory.
 
-log_step "De novo repeat library: RepeatModeler2"
+io::log_step "De novo repeat library: RepeatModeler2"
 
-# Build sequence database
-mamba run -n repeatmodeler BuildDatabase \
-    -name "${MASK_DIR}/repeatmodeler/trichoderma_harzianum" \
-    "${SCAFFOLDED}" \
-    > "${LOG_DIR}/repeatmodeler_builddatabase.stdout.log" \
-    2> "${LOG_DIR}/repeatmodeler_builddatabase.stderr.log"
+mask::build_database \
+    "${MASK_DIR}/repeatmodeler/trichoderma_harzianum" "${SCAFFOLDED}" \
+    "${LOG_DIR}/repeatmodeler_builddatabase.stdout.log" \
+    "${LOG_DIR}/repeatmodeler_builddatabase.stderr.log"
 
-# Run RepeatModeler2 from within the repeatmodeler directory
-cd "${MASK_DIR}/repeatmodeler"
-
-mamba run -n repeatmodeler RepeatModeler \
-    -database trichoderma_harzianum \
-    -pa 4 \
-    -LTRStruct \
-    > "${LOG_DIR}/repeatmodeler.stdout.log" \
-    2> "${LOG_DIR}/repeatmodeler.stderr.log"
-
-cd "${PROJECT_DIR}"
+mask::repeatmodeler \
+    "${MASK_DIR}/repeatmodeler" trichoderma_harzianum 4 \
+    "${LOG_DIR}/repeatmodeler.stdout.log" "${LOG_DIR}/repeatmodeler.stderr.log"
 
 REPEAT_LIB="${MASK_DIR}/repeatmodeler/trichoderma_harzianum-families.fa"
 
-log_info "Custom repeat library → ${REPEAT_LIB}"
+io::log_info "Custom repeat library → ${REPEAT_LIB}"
 
 #==============================================================================
 # STEP 5 — SOFT-MASK ASSEMBLY (RepeatMasker)
@@ -302,26 +259,20 @@ log_info "Custom repeat library → ${REPEAT_LIB}"
 # Relative paths cause it to silently write output to a temporary RM_*/
 # directory instead of the specified location.
 
-log_step "Soft-masking assembly: RepeatMasker"
+io::log_step "Soft-masking assembly: RepeatMasker"
 
-mamba run -n repeatmodeler RepeatMasker \
-    -lib "${REPEAT_LIB}" \
-    -pa 4 \
-    -xsmall \
-    -gff \
-    -dir "${PROJECT_DIR}/${MASK_DIR}/repeatmasker" \
-    "${SCAFFOLDED}" \
-    > "${LOG_DIR}/repeatmasker.stdout.log" \
-    2> "${LOG_DIR}/repeatmasker.stderr.log"
+mask::repeatmasker \
+    "${REPEAT_LIB}" 4 "${PROJECT_DIR}/${MASK_DIR}/repeatmasker" "${SCAFFOLDED}" \
+    "${LOG_DIR}/repeatmasker.stdout.log" "${LOG_DIR}/repeatmasker.stderr.log"
 
 MASKED_ASM="${MASK_DIR}/repeatmasker/ragtag.scaffold.fasta.masked"
 
-log_info "Soft-masked assembly → ${MASKED_ASM}"
-log_info "Key outputs:"
-log_info "  ragtag.scaffold.fasta.masked  — soft-masked assembly (input for annotation)"
-log_info "  ragtag.scaffold.fasta.tbl     — repeat content summary (expected 5–12%)"
-log_info "  ragtag.scaffold.fasta.gff     — GFF3 repeat annotation track"
-log_info "  ragtag.scaffold.fasta.out     — full tab-delimited repeat hit table"
+io::log_info "Soft-masked assembly → ${MASKED_ASM}"
+io::log_info "Key outputs:"
+io::log_info "  ragtag.scaffold.fasta.masked  — soft-masked assembly (input for annotation)"
+io::log_info "  ragtag.scaffold.fasta.tbl     — repeat content summary (expected 5–12%)"
+io::log_info "  ragtag.scaffold.fasta.gff     — GFF3 repeat annotation track"
+io::log_info "  ragtag.scaffold.fasta.out     — full tab-delimited repeat hit table"
 
 #==============================================================================
 # SUMMARY

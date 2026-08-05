@@ -249,10 +249,55 @@ Soft-masked assembly ← ready for annotation
 
 ---
 
-## Repository Structure
+## Pipeline Engineering
+
+The three numbered scripts are thin orchestrators: every external tool
+call lives in `lib/*.sh` as a small, named function (`module::function`,
+e.g. `assemble::flye`, `evaluate::busco`), and every one of those goes
+through a single wrapper, `io::run_tool`, which is the only place
+`mamba run -n <env> ...` appears in the codebase. That gives this project
+three things a flat collection of shell scripts doesn't have:
+
+- **`tests/*.bats`** — unit tests that verify each function builds the
+  right command line (correct flags, correct argument order, correct
+  redirection target) by stubbing `io::run_tool` instead of needing all
+  20 mamba environments and the real PacBio/Illumina dataset installed.
+  Run with `bats tests/` ([bats-core](https://bats-core.readthedocs.io/)
+  - `npm i -g bats` / `brew install bats-core` / `apt install bats`).
+- **`scripts/check_deps.sh`** — verifies `mamba` plus every required
+  mamba environment (cross-referenced against `envs/*.yml`) exists
+  *before* a run starts, so a missing environment fails in seconds
+  instead of hours into RepeatModeler2. Run with
+  `bash scripts/check_deps.sh`.
+- **`scripts/generate_function_graph.sh`** — regenerates
+  `graphs/call_graph.svg` (which stage calls which) and
+  `graphs/dependency_graph.svg` (which file sources/invokes what)
+  straight from the current `lib/*.sh`/`scripts/*.sh` source, so the
+  pipeline-flow diagram can't drift the way a hand-maintained one can.
+  Run with `bash scripts/generate_function_graph.sh` (needs Graphviz's
+  `dot` on `PATH`; without it, the `.dot` source is still written).
+  Note: since every tool call is routed through `io::run_tool`, this
+  graph shows the pipeline's *own* call structure, not a node per
+  bioinformatics tool - `envs/*.yml`/`specs/*.txt` remain the source of
+  truth for the tool inventory.
 
 ```
 project/
+├── lib/                         One function per external-tool call, module-prefixed
+│   ├── io.sh                      io::run_tool - the only place `mamba run` appears
+│   ├── download.sh                Stage 1 - SeqFetcher / SRA
+│   ├── qc.sh                      Stages 2 & 3 - SeqKit, LongReadSum, FastQC, MultiQC
+│   ├── filter.sh                  Stage 3 - fastplong, fastp
+│   ├── decontaminate.sh           Stage 4 - Kraken2
+│   ├── assemble.sh                Stage 5 - Flye, Raven, wtdbg2
+│   ├── polish.sh                  Stage 6 - Racon, Polypolish, NextPolish
+│   ├── evaluate.sh                Stage 7 - BUSCO, QUAST, Merqury
+│   ├── scaffold.sh                Stage 8 - RagTag
+│   └── mask.sh                    Stage 9 - RepeatModeler2, RepeatMasker
+├── tests/                       bats-core, one test_<file>.bats per lib/ file
+│   ├── fixtures/                   small hand-built FASTQ/FASTA, not the real dataset
+│   └── test_helper.bash            sources lib/*.sh + stubs io::run_tool for every test
+├── graphs/                      auto-generated call graph + dependency graph (committed)
 ├── 00_downloads/               # Raw FASTQ files from SRA
 ├── 01_qc_raw/                  # SeqKit stats, LongReadSum, FastQC, MultiQC on raw reads
 ├── 02_filtered/
