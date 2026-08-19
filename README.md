@@ -1,6 +1,6 @@
 ![BUSCO](https://img.shields.io/badge/BUSCO-99.8%25-success)
 ![QV](https://img.shields.io/badge/Merqury_QV-34.4-blue)
-![Assembly_Size](https://img.shields.io/badge/Assembly-38.95_Mb-orange)
+![Assembly_Size](https://img.shields.io/badge/Assembly-38.96_Mb-orange)
 
 # 🧬 Hybrid Genome Assembly Pipeline — *Trichoderma harzianum* TW11
 
@@ -43,11 +43,12 @@ Using multiple assemblers mitigates algorithm-specific biases and allows objecti
 
 | Metric | Value |
 |---|---|
-| Total length | 38.95 Mb |
+| Total length | 38.96 Mb |
 | Number of contigs | 70 |
 | Number of scaffolds | 17 |
-| Scaffold N50 | 1.63 Mbp |
-| Gap content | 0.000% |
+| Contig N50 (pre-scaffolding) | 1.63 Mbp |
+| Scaffold N50 | 6.66 Mbp |
+| Gap content | 0.014% |
 | BUSCO completeness | 99.8% (`hypocreaceae_odb12`) |
 | Merqury QV | 34.4 |
 | Repeat content | 3.80% |
@@ -198,7 +199,7 @@ C:99.8% [S:99.5%, D:0.3%], F:0.0%, M:0.1%, n:4323, E:1.6%
 
 RagTag orders, orients, and joins the 70 polished contigs into pseudochromosomes using a chromosome-level *T. harzianum* reference ([GCA_019097725.1, SYAU_Tha_1.0](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_019097725.1/)).
 
-The `-u` flag retains all unplaced contigs in the output, preserving any TW11-specific sequences absent from the reference strain.
+The `-u` flag retains all unplaced contigs in the output, preserving any TW11-specific sequences absent from the reference strain. 61 of the 70 polished contigs (38.66 Mb) were placed onto pseudochromosomes; the remaining 9 (295 kb) stayed unplaced. Ordering and joining the placed contigs raised contiguity from an N50 of 1.63 Mb (70 contigs) to 6.66 Mb (17 scaffolds) — a ~4x improvement without adding any new sequencing data.
 
 > **Scaffolding vs. polishing order:** Scaffolding is performed *after* polishing and *before* repeat masking. RagTag's internal minimap2 alignment is inhibited by soft-masked bases, so masking must always be the final step before annotation.
 

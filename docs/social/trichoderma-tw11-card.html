@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,500;1,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #0c1220; }
+</style>
+</head>
+<body>
+
+<div style="position: relative; width: 1200px; height: 627px; background: oklch(0.16 0.02 250); overflow: hidden; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: oklch(0.96 0.01 250);">
+
+  <!-- decorative double-helix motif -->
+  <svg viewBox="0 0 220 700" style="position: absolute; top: -50px; right: -30px; width: 480px; height: 700px; opacity: 0.16; pointer-events: none;">
+    <path d="M110,0 C170,40 50,80 110,120 C170,160 50,200 110,240 C170,280 50,320 110,360 C170,400 50,440 110,480 C170,520 50,560 110,600 C170,640 50,680 110,700"
+          fill="none" stroke="oklch(0.75 0.13 195)" stroke-width="4" />
+    <path d="M110,0 C50,40 170,80 110,120 C50,160 170,200 110,240 C50,280 170,320 110,360 C50,400 170,440 110,480 C50,520 170,560 110,600 C50,640 170,680 110,700"
+          fill="none" stroke="oklch(0.78 0.15 70)" stroke-width="4" />
+    <line x1="78" y1="20" x2="142" y2="20" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="60" x2="142" y2="60" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="140" x2="142" y2="140" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="180" x2="142" y2="180" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="260" x2="142" y2="260" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="300" x2="142" y2="300" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="380" x2="142" y2="380" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="420" x2="142" y2="420" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="500" x2="142" y2="500" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="540" x2="142" y2="540" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="620" x2="142" y2="620" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+    <line x1="78" y1="660" x2="142" y2="660" stroke="oklch(0.6 0.02 250)" stroke-width="2" />
+  </svg>
+
+  <div style="position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; padding: 56px 68px; gap: 22px;">
+
+    <!-- header -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: oklch(0.75 0.13 195);"></div>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: oklch(0.75 0.13 195); text-transform: uppercase;">Personal project &middot; bioinformatics</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <h1 style="margin: 0; font-family: 'Newsreader', Georgia, serif; font-style: italic; font-weight: 600; font-size: 42px; line-height: 1.08; letter-spacing: -0.01em; color: oklch(0.97 0.01 250);">Trichoderma harzianum TW11</h1>
+        <p style="margin: 0; font-size: 17px; color: oklch(0.74 0.02 250); font-weight: 400;">Hybrid genome assembly &mdash; a project built to learn the full pipeline, end to end</p>
+      </div>
+    </div>
+
+    <!-- pipeline strip -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;">
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">01</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">QC</span>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M9 6l6 6-6 6" fill="none" stroke="oklch(0.5 0.02 250)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">02</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">FILTER</span>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M9 6l6 6-6 6" fill="none" stroke="oklch(0.5 0.02 250)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">03</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">DECONTAM</span>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M9 6l6 6-6 6" fill="none" stroke="oklch(0.5 0.02 250)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">04</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">ASSEMBLE &times;3</span>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M9 6l6 6-6 6" fill="none" stroke="oklch(0.5 0.02 250)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">05</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">POLISH</span>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M9 6l6 6-6 6" fill="none" stroke="oklch(0.5 0.02 250)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">06</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">SCAFFOLD</span>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" style="flex-shrink: 0;"><path d="M9 6l6 6-6 6" fill="none" stroke="oklch(0.5 0.02 250)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 8px; white-space: nowrap;">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: oklch(0.75 0.13 195); font-weight: 600;">07</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.03em; color: oklch(0.9 0.01 250);">MASK</span>
+      </div>
+    </div>
+
+    <!-- headline result + stats -->
+    <div style="display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; align-items: stretch;">
+
+      <!-- N50 before/after -->
+      <div style="display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 20px 24px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: oklch(0.75 0.13 195); text-transform: uppercase;">Reference-guided scaffolding</span>
+          <span style="font-size: 25px; font-weight: 700; color: oklch(0.78 0.15 70);">4&times; contiguity jump</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 92px 1fr 66px; align-items: center; gap: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: oklch(0.68 0.02 250);">70 contigs</span>
+          <div style="position: relative; height: 12px; background: oklch(0.27 0.02 250); border-radius: 6px; overflow: hidden;">
+            <div style="position: absolute; left: 0; top: 0; height: 100%; width: 24.5%; background: oklch(0.6 0.1 195);"></div>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: oklch(0.68 0.02 250); text-align: right;">1.63 Mb</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 92px 1fr 66px; align-items: center; gap: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: oklch(0.9 0.01 250); font-weight: 600;">17 scaffolds</span>
+          <div style="position: relative; height: 12px; background: oklch(0.27 0.02 250); border-radius: 6px; overflow: hidden;">
+            <div style="position: absolute; left: 0; top: 0; height: 100%; width: 100%; background: oklch(0.78 0.15 70);"></div>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: oklch(0.78 0.15 70); font-weight: 700; text-align: right;">6.66 Mb</span>
+        </div>
+
+        <span style="font-size: 12px; color: oklch(0.6 0.02 250);">N50 lifted by ordering contigs against a related genome &mdash; zero new sequencing data.</span>
+      </div>
+
+      <!-- stat grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px;">
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 14px 16px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; color: oklch(0.96 0.01 250);">38.96 Mb</span>
+          <span style="font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: oklch(0.62 0.02 250);">Assembly size</span>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 14px 16px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; color: oklch(0.96 0.01 250);">99.8%</span>
+          <span style="font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: oklch(0.62 0.02 250);">BUSCO complete</span>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 14px 16px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; color: oklch(0.96 0.01 250);">QV 34.4</span>
+          <span style="font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: oklch(0.62 0.02 250);">Merqury accuracy</span>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 14px 16px; background: oklch(0.21 0.025 250); border: 1px solid oklch(0.32 0.02 250); border-radius: 10px;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; color: oklch(0.96 0.01 250);">3.80%</span>
+          <span style="font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: oklch(0.62 0.02 250);">Repeats masked</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid oklch(0.3 0.02 250);">
+      <span style="font-size: 13px; color: oklch(0.62 0.02 250);"><em style="font-family: 'Newsreader', Georgia, serif; color: oklch(0.85 0.01 250);">T. harzianum</em> TW11 &middot; hybrid PacBio + Illumina assembly</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: oklch(0.75 0.13 195);">github.com/BaskervilleDog/genome-assembly-project-1</span>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
